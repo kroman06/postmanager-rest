@@ -6,6 +6,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import net.kozachok.postmanager.config.JwtProperties;
+import net.kozachok.postmanager.domain.RoleName;
 import net.kozachok.postmanager.domain.User;
 import net.kozachok.postmanager.security.JwtService;
 import org.springframework.stereotype.Service;
@@ -14,9 +15,8 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Date;
-import java.util.HexFormat;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +26,16 @@ public class JwtServiceImpl implements JwtService {
     private SecretKey signingKey() {
         byte[] bytes = jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8);
         return Keys.hmacShaKeyFor(bytes);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Set<RoleName> extractRoles(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(signingKey()).build()
+                .parseSignedClaims(token).getPayload();
+        List<String> roles = claims.get("roles", List.class);
+        return roles.stream().map(RoleName::valueOf).collect(Collectors.toSet());
     }
 
     @Override

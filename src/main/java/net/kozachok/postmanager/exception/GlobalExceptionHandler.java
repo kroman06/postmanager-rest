@@ -28,7 +28,8 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex) {
+//        ex.printStackTrace();
         return ResponseEntity.internalServerError()
-                .body(new ErrorResponse("Internal server error", 500));
+                .body(new ErrorResponse(ex.getMessage(), 500));
     }
 }

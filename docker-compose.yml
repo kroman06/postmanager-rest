@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postmanager-db
+    environment:
+      POSTGRES_DB: postmanager
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      TZ: Europe/Kyiv
+      PGTZ: Europe/Kyiv
+    volumes:
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: postmanager-app
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postmanager
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      JWT_SECRET: 5a7d3f9b2e1c8d4f6a0b3e7c9d2f1a8b4c6e0f3a7d5b9c1e4f2a6b8d0c3e5f7
+      TZ: Europe/Kyiv
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data:

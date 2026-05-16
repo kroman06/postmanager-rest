@@ -1,9 +1,42 @@
 package net.kozachok.postmanager.controller;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import net.kozachok.postmanager.dto.request.CommentRequest;
+import net.kozachok.postmanager.dto.response.CommentResponse;
+import net.kozachok.postmanager.security.SecurityUtils;
+import net.kozachok.postmanager.service.CommentService;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/comments")
+@RequiredArgsConstructor
 public class CommentController {
+
+    private final CommentService commentService;
+
+    @PostMapping("/articles/{articleId}/comments")
+    @PreAuthorize("isAuthenticated()")
+    @ResponseStatus(HttpStatus.CREATED)
+    public CommentResponse create(@PathVariable UUID articleId,
+                                  @Valid @RequestBody CommentRequest request) {
+        return commentService.create(request.content(), articleId, SecurityUtils.getCurrentUser());
+    }
+
+    @PatchMapping("/comments/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public CommentResponse update(@PathVariable UUID id,
+                                  @Valid @RequestBody CommentRequest request) {
+        return commentService.update(id, request.content(), SecurityUtils.getCurrentUser());
+    }
+
+    @DeleteMapping("/comments/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable UUID id) {
+        commentService.delete(id, SecurityUtils.getCurrentUser());
+    }
 }

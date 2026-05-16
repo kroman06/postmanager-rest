@@ -1,0 +1,19 @@
+# Git
+.git
+.gitignore
+
+# Maven
+target/
+.mvn/
+
+# IDE
+.idea/
+*.iml
+
+# Docker
+Dockerfile
+docker-compose.yml
+docker-compose.dev.yml
+
+# Tests
+src/test/
