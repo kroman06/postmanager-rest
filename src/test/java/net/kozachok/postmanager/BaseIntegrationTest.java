@@ -5,7 +5,8 @@ import net.kozachok.postmanager.domain.Role;
 import net.kozachok.postmanager.domain.RoleName;
 import net.kozachok.postmanager.domain.User;
 import net.kozachok.postmanager.dto.request.LoginRequest;
-import net.kozachok.postmanager.repository.*;
+import net.kozachok.postmanager.repository.RoleRepository;
+import net.kozachok.postmanager.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,17 +26,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 public abstract class BaseIntegrationTest {
-
-    @Autowired protected MockMvc           mockMvc;
-    @Autowired protected ObjectMapper      objectMapper;
-    @Autowired protected UserRepository    userRepository;
-    @Autowired protected ArticleRepository articleRepository;
-    @Autowired protected CommentRepository commentRepository;
-    @Autowired protected CategoryRepository categoryRepository;
-    @Autowired protected RefreshTokenRepository refreshTokenRepository;
-    @Autowired protected RoleRepository    roleRepository;
-    @Autowired protected PasswordEncoder   passwordEncoder;
-    @Autowired protected JdbcTemplate      jdbcTemplate;
+    @Autowired protected MockMvc        mockMvc;
+    @Autowired protected ObjectMapper   objectMapper;
+    @Autowired protected UserRepository userRepository;
+    @Autowired protected RoleRepository roleRepository;
+    @Autowired protected PasswordEncoder passwordEncoder;
+    @Autowired protected JdbcTemplate   jdbcTemplate;
 
     protected static final String TEST_PASSWORD = "Password1!";
 
