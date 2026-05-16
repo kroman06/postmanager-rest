@@ -48,7 +48,6 @@ public class CommentServiceImpl implements CommentService {
         if (!comment.isOwnedBy(currentUser.id())) {
             throw new AccessForbiddenException();
         }
-
         comment.setContent(content);
 
         return commentMapper.toResponse(commentRepository.save(comment));

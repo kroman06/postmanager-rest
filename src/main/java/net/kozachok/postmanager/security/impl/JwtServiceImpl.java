@@ -56,6 +56,7 @@ public class JwtServiceImpl implements JwtService {
     public String generateRefreshToken(User user) {
         long now = System.currentTimeMillis();
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(user.getId().toString())
                 .issuedAt(new Date(now))
                 .expiration(new Date(now + jwtProperties.getRefreshExpiration().toMillis()))
