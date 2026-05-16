@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: postmanager
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postmanager
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+jwt:
+  secret: ${JWT_SECRET:5a7d3f9b2e1c8d4f6a0b3e7c9d2f1a8b4c6e0f3a7d5b9c1e4f2a6b8d0c3e5f7}
+  access-expiration: PT15M
+  refresh-expiration: P7D
+
+server:
+  port: 8080

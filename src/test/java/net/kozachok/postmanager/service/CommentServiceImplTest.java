@@ -7,6 +7,7 @@ import net.kozachok.postmanager.exception.ResourceNotFoundException;
 import net.kozachok.postmanager.mapper.CommentMapper;
 import net.kozachok.postmanager.repository.ArticleRepository;
 import net.kozachok.postmanager.repository.CommentRepository;
+import net.kozachok.postmanager.repository.UserRepository;
 import net.kozachok.postmanager.service.impl.CommentServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +26,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CommentServiceImplTest {
-
+    @Mock private UserRepository userRepository;
     @Mock private CommentRepository commentRepository;
     @Mock private ArticleRepository articleRepository;
     @Mock private CommentMapper commentMapper;
@@ -50,8 +51,12 @@ class CommentServiceImplTest {
         Article article = new Article();
         article.setStatus(ArticleStatus.PUBLISHED);
 
+        User author = new User();
+        author.setId(AUTHOR_ID);
+
         when(articleRepository.findByIdAndStatus(ARTICLE_ID, ArticleStatus.PUBLISHED))
                 .thenReturn(Optional.of(article));
+        when(userRepository.findById(AUTHOR_ID)).thenReturn(Optional.of(author));
         when(commentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(commentMapper.toResponse(any())).thenReturn(mock(CommentResponse.class));
 

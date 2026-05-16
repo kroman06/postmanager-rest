@@ -1,35 +1,68 @@
 package net.kozachok.postmanager.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import net.kozachok.postmanager.domain.CurrentUser;
+import net.kozachok.postmanager.domain.*;
 import net.kozachok.postmanager.dto.response.CommentResponse;
+import net.kozachok.postmanager.exception.*;
 import net.kozachok.postmanager.mapper.CommentMapper;
 import net.kozachok.postmanager.repository.ArticleRepository;
 import net.kozachok.postmanager.repository.CommentRepository;
+import net.kozachok.postmanager.repository.UserRepository;
 import net.kozachok.postmanager.service.CommentService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CommentServiceImpl implements CommentService {
+
     private final CommentRepository commentRepository;
     private final ArticleRepository articleRepository;
-    private final CommentMapper commentMapper;
+    private final UserRepository    userRepository;
+    private final CommentMapper     commentMapper;
 
     @Override
     public CommentResponse create(String content, UUID articleId, CurrentUser currentUser) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        Article article = articleRepository.findByIdAndStatus(articleId, ArticleStatus.PUBLISHED)
+                .orElseThrow(() -> new ResourceNotFoundException("Article", articleId));
+
+        User author = userRepository.findById(currentUser.id())
+                .orElseThrow(() -> new ResourceNotFoundException("User", currentUser.id()));
+
+        Comment comment = new Comment();
+        comment.setContent(content);
+        comment.setArticle(article);
+        comment.setAuthor(author);
+
+        return commentMapper.toResponse(commentRepository.save(comment));
     }
 
     @Override
     public CommentResponse update(UUID id, String content, CurrentUser currentUser) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        Comment comment = commentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment", id));
+
+        if (!comment.isOwnedBy(currentUser.id())) {
+            throw new AccessForbiddenException();
+        }
+
+        comment.setContent(content);
+
+        return commentMapper.toResponse(commentRepository.save(comment));
     }
 
     @Override
     public void delete(UUID id, CurrentUser currentUser) {
-        throw new UnsupportedOperationException("Not implemented yet");
+        Comment comment = commentRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Comment", id));
+
+        if (!currentUser.isAdmin()) {
+            throw new AccessForbiddenException();
+        }
+
+        commentRepository.delete(comment);
     }
 }

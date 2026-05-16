@@ -1,6 +1,9 @@
 package net.kozachok.postmanager.service;
 
+import net.kozachok.postmanager.config.JwtProperties;
 import net.kozachok.postmanager.domain.RefreshToken;
+import net.kozachok.postmanager.domain.Role;
+import net.kozachok.postmanager.domain.RoleName;
 import net.kozachok.postmanager.domain.User;
 import net.kozachok.postmanager.dto.request.LoginRequest;
 import net.kozachok.postmanager.dto.request.RegisterRequest;
@@ -11,6 +14,7 @@ import net.kozachok.postmanager.exception.EmailAlreadyExistsException;
 import net.kozachok.postmanager.exception.InvalidRefreshTokenException;
 import net.kozachok.postmanager.mapper.UserMapper;
 import net.kozachok.postmanager.repository.RefreshTokenRepository;
+import net.kozachok.postmanager.repository.RoleRepository;
 import net.kozachok.postmanager.repository.UserRepository;
 import net.kozachok.postmanager.security.JwtService;
 import net.kozachok.postmanager.service.impl.AuthServiceImpl;
@@ -22,6 +26,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -40,6 +45,8 @@ class AuthServiceImplTest {
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private JwtService jwtService;
     @Mock private UserMapper userMapper;
+    @Mock private RoleRepository roleRepository;
+    @Mock private JwtProperties jwtProperties;
     @InjectMocks private AuthServiceImpl authService;
 
     // ── register ─────────────────────────────────────────────
@@ -48,7 +55,11 @@ class AuthServiceImplTest {
     void register_shouldSaveUserWithHashedPassword() {
         RegisterRequest request = new RegisterRequest("user@test.com", "password123", "John", "Doe");
 
+        Role readerRole = new Role();
+        readerRole.setName(RoleName.ROLE_READER);
+
         when(userRepository.existsByEmail(request.email())).thenReturn(false);
+        when(roleRepository.findByName(RoleName.ROLE_READER)).thenReturn(Optional.of(readerRole));
         when(passwordEncoder.encode(request.password())).thenReturn("hashed_password");
         when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(userMapper.toResponse(any())).thenReturn(mock(UserResponse.class));
@@ -88,6 +99,7 @@ class AuthServiceImplTest {
         when(jwtService.generateAccessToken(user)).thenReturn("access_token");
         when(jwtService.generateRefreshToken(user)).thenReturn("refresh_token");
         when(jwtService.hashToken("refresh_token")).thenReturn("hashed_token");
+        when(jwtProperties.getRefreshExpiration()).thenReturn(Duration.ofDays(7));
 
         TokenResponse response = authService.login(request);
 
@@ -137,6 +149,7 @@ class AuthServiceImplTest {
         when(jwtService.generateAccessToken(user)).thenReturn("new_access");
         when(jwtService.generateRefreshToken(user)).thenReturn("new_refresh");
         when(jwtService.hashToken("new_refresh")).thenReturn("new_hash");
+        when(jwtProperties.getRefreshExpiration()).thenReturn(Duration.ofDays(7));
 
         TokenResponse response = authService.refresh(rawToken);
 

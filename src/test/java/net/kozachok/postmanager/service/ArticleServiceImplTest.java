@@ -9,6 +9,7 @@ import net.kozachok.postmanager.exception.ResourceNotFoundException;
 import net.kozachok.postmanager.mapper.ArticleMapper;
 import net.kozachok.postmanager.repository.ArticleRepository;
 import net.kozachok.postmanager.repository.CategoryRepository;
+import net.kozachok.postmanager.repository.UserRepository;
 import net.kozachok.postmanager.service.impl.ArticleServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,7 +29,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ArticleServiceImplTest {
-
+    @Mock private UserRepository userRepository;
     @Mock private ArticleRepository articleRepository;
     @Mock private CategoryRepository categoryRepository;
     @Mock private ArticleMapper articleMapper;
@@ -254,6 +255,9 @@ class ArticleServiceImplTest {
     void create_shouldSaveArticleWithDraftStatus() {
         ArticleRequest request = new ArticleRequest("Title", "Content", null);
 
+        User author = new User();
+        author.setId(AUTHOR_ID);
+        when(userRepository.findById(AUTHOR_ID)).thenReturn(Optional.of(author));
         when(articleRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(articleMapper.toResponse(any())).thenReturn(mock(ArticleResponse.class));
 
@@ -269,6 +273,9 @@ class ArticleServiceImplTest {
     void create_shouldThrowNotFound_whenCategoryNotExists() {
         ArticleRequest request = new ArticleRequest("Title", "Content", 999);
 
+        User author = new User();
+        author.setId(AUTHOR_ID);
+        when(userRepository.findById(AUTHOR_ID)).thenReturn(Optional.of(author));
         when(categoryRepository.findById(999)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> articleService.create(request, authorUser()))
