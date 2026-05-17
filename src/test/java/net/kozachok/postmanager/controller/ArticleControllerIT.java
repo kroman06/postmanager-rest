@@ -1,15 +1,17 @@
 package net.kozachok.postmanager.controller;
 
 import net.kozachok.postmanager.BaseIntegrationTest;
-import net.kozachok.postmanager.domain.*;
+import net.kozachok.postmanager.domain.RoleName;
 import net.kozachok.postmanager.dto.request.ArticleRequest;
+import net.kozachok.postmanager.dto.request.CategoryRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
 @SuppressWarnings("SameParameterValue")
@@ -32,7 +34,7 @@ class ArticleControllerIT extends BaseIntegrationTest {
         return id;
     }
 
-    // Pagination
+    // Find
 
     @Test
     void findPublished_shouldReturnPaginatedResult() throws Exception {
@@ -62,8 +64,6 @@ class ArticleControllerIT extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.last").value(false));
     }
 
-    // findMyById — not owner
-
     @Test
     void findMyById_shouldReturn403_whenNotOwner() throws Exception {
         createUser("other@test.com", RoleName.ROLE_AUTHOR);
@@ -79,6 +79,125 @@ class ArticleControllerIT extends BaseIntegrationTest {
         mockMvc.perform(get("/articles/my/" + id)
                         .header("Authorization", getToken("other@test.com")))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void findPublished_shouldReturnFilteredByCategory_whenCategoryIdProvided() throws Exception {
+        String admin = adminToken();
+        String author = authorToken();
+
+        String categoryBody = mockMvc.perform(post("/categories")
+                        .header("Authorization", admin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new CategoryRequest("Tech", "desc"))))
+                .andReturn().getResponse().getContentAsString();
+        int categoryId = objectMapper.readTree(categoryBody).get("id").intValue();
+
+        // with category
+        String body = mockMvc.perform(post("/articles")
+                        .header("Authorization", author)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new ArticleRequest("Tech Article", "Content", categoryId))))
+                .andReturn().getResponse().getContentAsString();
+        String id = objectMapper.readTree(body).get("id").asString();
+        mockMvc.perform(patch("/articles/" + id + "/publish")
+                .header("Authorization", author));
+
+        // no category
+        createAndPublishArticle("author@test.com");
+
+        mockMvc.perform(get("/articles?categoryId=" + categoryId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].categoryId").value(categoryId));
+    }
+
+    @Test
+    void findPublished_shouldReturnAll_whenNoCategoryFilter() throws Exception {
+        createAndPublishArticle("author@test.com");
+        createAndPublishArticle("author@test.com");
+
+        mockMvc.perform(get("/articles"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2));
+    }
+
+    @Test
+    void findPublished_shouldReturnEmpty_whenCategoryHasNoArticles() throws Exception {
+        String categoryBody = mockMvc.perform(post("/categories")
+                        .header("Authorization", adminToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new CategoryRequest("Empty", "desc"))))
+                .andReturn().getResponse().getContentAsString();
+        int categoryId = objectMapper.readTree(categoryBody).get("id").intValue();
+
+        mockMvc.perform(get("/articles?categoryId=" + categoryId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
+    void findAllArticles_shouldReturnAllStatuses_whenAdmin() throws Exception {
+        String author = authorToken();
+
+        // DRAFT
+        mockMvc.perform(post("/articles")
+                        .header("Authorization", author)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new ArticleRequest("Draft", "Content", null))))
+                .andExpect(status().isCreated());
+
+        // PUBLISHED
+        createAndPublishArticle("author@test.com");
+
+        // ARCHIVED
+        String id = createAndPublishArticle("author@test.com");
+        mockMvc.perform(patch("/articles/" + id + "/archive")
+                .header("Authorization", author));
+
+        mockMvc.perform(get("/articles/admin/all")
+                        .header("Authorization", adminToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(3));
+    }
+
+    @Test
+    void findAllArticles_shouldFilterByStatus_whenStatusProvided() throws Exception {
+        String author = authorToken();
+        mockMvc.perform(post("/articles")
+                        .header("Authorization", author)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new ArticleRequest("Draft 1", "Content", null))))
+                .andExpect(status().isCreated());
+        mockMvc.perform(post("/articles")
+                        .header("Authorization", author)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new ArticleRequest("Draft 2", "Content", null))))
+                .andExpect(status().isCreated());
+
+        createAndPublishArticle("author@test.com");
+        mockMvc.perform(get("/articles/admin/all?status=DRAFT")
+                        .header("Authorization", adminToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2));
+    }
+
+    @Test
+    void findAllArticles_shouldReturn403_whenNotAdmin() throws Exception {
+        mockMvc.perform(get("/articles/admin/all")
+                        .header("Authorization", authorToken()))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void findAllArticles_shouldReturn401_whenUnauthenticated() throws Exception {
+        mockMvc.perform(get("/articles/admin/all")).andExpect(status().isUnauthorized());
     }
 
     // US-06 Create article

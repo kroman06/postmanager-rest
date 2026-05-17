@@ -2,7 +2,7 @@ package net.kozachok.postmanager.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import net.kozachok.postmanager.dto.request.ChangeRoleRequest;
+import net.kozachok.postmanager.dto.request.RoleRequest;
 import net.kozachok.postmanager.dto.response.UserResponse;
 import net.kozachok.postmanager.service.UserService;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,8 +25,15 @@ public class UserController {
 
     @PatchMapping("/{id}/role")
     @PreAuthorize("hasRole('ADMIN')")
-    public UserResponse changeRole(@PathVariable UUID id,
-                                   @Valid @RequestBody ChangeRoleRequest request) {
-        return userService.changeRole(id, request.role());
+    public UserResponse addRole(@PathVariable UUID id,
+                                @Valid @RequestBody RoleRequest request) {
+        return userService.addRole(id, request.roles());
+    }
+
+    @DeleteMapping("/{id}/role")
+    @PreAuthorize("hasRole('ADMIN')")
+    public UserResponse removeRole(@PathVariable UUID id,
+                                   @Valid @RequestBody RoleRequest request) {
+        return userService.removeRole(id, request.roles());
     }
 }

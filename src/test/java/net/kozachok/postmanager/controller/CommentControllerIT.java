@@ -51,8 +51,9 @@ class CommentControllerIT extends BaseIntegrationTest {
 
         mockMvc.perform(get("/articles/" + articleId + "/comments"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$[0].content").value("Test Comment"));
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.content[0].content").value("Test Comment"))
+                .andExpect(jsonPath("$.totalElements").value(1));
     }
 
     // US-18 Add comment

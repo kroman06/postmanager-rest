@@ -40,6 +40,7 @@ public class SecurityConfig {
                         "/v3/api-docs.yaml",
                         "/webjars/**"
                 ).permitAll()
+                .requestMatchers(HttpMethod.GET, "/articles/admin/**").authenticated()
                 .requestMatchers(HttpMethod.GET, "/articles/**", "/categories").permitAll()
                 .anyRequest().authenticated()
             )
