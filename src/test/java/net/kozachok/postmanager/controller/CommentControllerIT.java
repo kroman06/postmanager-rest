@@ -23,7 +23,7 @@ class CommentControllerIT extends BaseIntegrationTest {
                                 new ArticleRequest("Title", "Content", null))))
                 .andReturn().getResponse().getContentAsString();
 
-        String id = objectMapper.readTree(body).get("id").asText();
+        String id = objectMapper.readTree(body).get("id").asString();
 
         mockMvc.perform(patch("/articles/" + id + "/publish")
                 .header("Authorization", author));
@@ -78,7 +78,7 @@ class CommentControllerIT extends BaseIntegrationTest {
                                 new CommentRequest("Original"))))
                 .andReturn().getResponse().getContentAsString();
 
-        String commentId = objectMapper.readTree(commentBody).get("id").asText();
+        String commentId = objectMapper.readTree(commentBody).get("id").asString();
         mockMvc.perform(patch("/comments/" + commentId)
                         .header("Authorization", reader)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -98,7 +98,7 @@ class CommentControllerIT extends BaseIntegrationTest {
                                 new CommentRequest("Original"))))
                 .andReturn().getResponse().getContentAsString();
 
-        String commentId = objectMapper.readTree(commentBody).get("id").asText();
+        String commentId = objectMapper.readTree(commentBody).get("id").asString();
         createUser("other@test.com", RoleName.ROLE_READER);
         mockMvc.perform(patch("/comments/" + commentId)
                         .header("Authorization", getToken("other@test.com"))
@@ -120,7 +120,7 @@ class CommentControllerIT extends BaseIntegrationTest {
                                 new CommentRequest("To be deleted"))))
                 .andReturn().getResponse().getContentAsString();
 
-        String commentId = objectMapper.readTree(commentBody).get("id").asText();
+        String commentId = objectMapper.readTree(commentBody).get("id").asString();
         mockMvc.perform(delete("/comments/" + commentId)
                         .header("Authorization", adminToken()))
                 .andExpect(status().isNoContent());
@@ -136,7 +136,7 @@ class CommentControllerIT extends BaseIntegrationTest {
                                 new CommentRequest("Comment"))))
                 .andReturn().getResponse().getContentAsString();
 
-        String commentId = objectMapper.readTree(commentBody).get("id").asText();
+        String commentId = objectMapper.readTree(commentBody).get("id").asString();
         createUser("other@test.com", RoleName.ROLE_READER);
         mockMvc.perform(delete("/comments/" + commentId)
                         .header("Authorization", getToken("other@test.com")))

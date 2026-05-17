@@ -83,7 +83,7 @@ class AuthControllerIT extends BaseIntegrationTest {
                                 new LoginRequest("reader@test.com", TEST_PASSWORD))))
                 .andReturn().getResponse().getContentAsString();
 
-        String refreshToken = objectMapper.readTree(loginBody).get("refreshToken").asText();
+        String refreshToken = objectMapper.readTree(loginBody).get("refreshToken").asString();
 
         mockMvc.perform(post("/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)

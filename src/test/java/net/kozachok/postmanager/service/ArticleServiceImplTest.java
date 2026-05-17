@@ -23,8 +23,6 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -98,7 +96,7 @@ class ArticleServiceImplTest {
 
     @Test
     void publish_shouldThrowForbidden_whenAdmin() {
-        // business-rule: even admin  can't publish articles of other users
+        // business-rule: even admin can't publish articles of other users
         when(articleRepository.findById(ARTICLE_ID)).thenReturn(Optional.of(article(ArticleStatus.DRAFT)));
 
         assertThatThrownBy(() -> articleService.publish(ARTICLE_ID, adminUser()))

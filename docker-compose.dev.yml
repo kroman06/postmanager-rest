@@ -1,13 +1,12 @@
 services:
   postgres:
-    image: postgres:latest
-    container_name: postmanager-db
+    image: postgres:${POSTGRES_VERSION}
     environment:
       POSTGRES_DB: postmanager
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      TZ: 'Europe/Kyiv'
-      PGTZ: 'Europe/Kyiv'
+      TZ: Europe/Kyiv
+      PGTZ: Europe/Kyiv
     ports:
       - "5432:5432"
     volumes:

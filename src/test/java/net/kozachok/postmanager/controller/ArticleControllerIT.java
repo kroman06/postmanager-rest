@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 
+@SuppressWarnings("SameParameterValue")
 class ArticleControllerIT extends BaseIntegrationTest {
     private String createAndPublishArticle(String authorEmail) throws Exception {
         String author = getToken(authorEmail);
@@ -23,7 +24,7 @@ class ArticleControllerIT extends BaseIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
 
-        String id = objectMapper.readTree(body).get("id").asText();
+        String id = objectMapper.readTree(body).get("id").asString();
         mockMvc.perform(patch("/articles/" + id + "/publish")
                         .header("Authorization", author))
                 .andExpect(status().isOk());
@@ -67,7 +68,7 @@ class ArticleControllerIT extends BaseIntegrationTest {
                                 new ArticleRequest("Title", "Content", null))))
                 .andReturn().getResponse().getContentAsString();
 
-        String id = objectMapper.readTree(body).get("id").asText();
+        String id = objectMapper.readTree(body).get("id").asString();
         mockMvc.perform(patch("/articles/" + id + "/publish")
                         .header("Authorization", author))
                 .andExpect(status().isOk())
@@ -93,7 +94,7 @@ class ArticleControllerIT extends BaseIntegrationTest {
                                 new ArticleRequest("Title", "Content", null))))
                 .andReturn().getResponse().getContentAsString();
 
-        String id = objectMapper.readTree(body).get("id").asText();
+        String id = objectMapper.readTree(body).get("id").asString();
         mockMvc.perform(patch("/articles/" + id + "/publish")
                         .header("Authorization", getToken("other@test.com")))
                 .andExpect(status().isForbidden());
@@ -120,7 +121,7 @@ class ArticleControllerIT extends BaseIntegrationTest {
                                 new ArticleRequest("Title", "Content", null))))
                 .andReturn().getResponse().getContentAsString();
 
-        String id = objectMapper.readTree(body).get("id").asText();
+        String id = objectMapper.readTree(body).get("id").asString();
         mockMvc.perform(patch("/articles/" + id + "/archive")
                         .header("Authorization", author))
                 .andExpect(status().isBadRequest());
