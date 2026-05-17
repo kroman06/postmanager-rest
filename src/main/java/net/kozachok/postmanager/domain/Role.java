@@ -10,6 +10,7 @@ import lombok.*;
 @AllArgsConstructor
 @Entity
 @Table(name = "roles")
+@EqualsAndHashCode(of = "name")
 public class Role {
 
     @Id

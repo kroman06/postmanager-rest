@@ -24,7 +24,7 @@ class ArticleTest {
         return article;
     }
 
-    // ── canPublish ───────────────────────────────────────────
+    //  canPublish
 
     @Test
     void canPublish_shouldReturnTrue_whenStatusIsDraft() {
@@ -41,7 +41,7 @@ class ArticleTest {
         assertThat(articleWithStatus(ArticleStatus.ARCHIVED).canPublish()).isFalse();
     }
 
-    // ── canArchive ───────────────────────────────────────────
+    // canArchive
 
     @Test
     void canArchive_shouldReturnTrue_whenStatusIsPublished() {
@@ -58,7 +58,7 @@ class ArticleTest {
         assertThat(articleWithStatus(ArticleStatus.ARCHIVED).canArchive()).isFalse();
     }
 
-    // ── canRestore ───────────────────────────────────────────
+    //  canRestore
 
     @Test
     void canRestore_shouldReturnTrue_whenStatusIsArchived() {
@@ -75,7 +75,7 @@ class ArticleTest {
         assertThat(articleWithStatus(ArticleStatus.PUBLISHED).canRestore()).isFalse();
     }
 
-    // ── isOwnedBy ────────────────────────────────────────────
+    // isOwnedBy
 
     @Test
     void isOwnedBy_shouldReturnTrue_whenUserIsAuthor() {

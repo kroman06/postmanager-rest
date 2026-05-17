@@ -26,7 +26,7 @@ class CategoryServiceImplTest {
     @Mock private CategoryMapper categoryMapper;
     @InjectMocks private CategoryServiceImpl categoryService;
 
-    // ── create ───────────────────────────────────────────────
+    // create
 
     @Test
     void create_shouldSaveCategory_whenNameNotTaken() {
@@ -51,7 +51,7 @@ class CategoryServiceImplTest {
         verify(categoryRepository, never()).save(any());
     }
 
-    // ── update ───────────────────────────────────────────────
+    // update
 
     @Test
     void update_shouldUpdateCategory_whenExists() {
@@ -104,7 +104,7 @@ class CategoryServiceImplTest {
         verify(categoryRepository).save(argThat(c -> c.getDescription().equals("New description")));
     }
 
-    // ── delete ───────────────────────────────────────────────
+    // delete
 
     @Test
     void delete_shouldDelete_whenExists() {

@@ -69,13 +69,18 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toSet());
 
         if (!missing.isEmpty()) {
-            throw new ArticleApiException(
-                    "User does not have roles: " + missing, HttpStatus.BAD_REQUEST);
+            throw new ArticleApiException("User does not have roles: " + missing, HttpStatus.BAD_REQUEST);
+        }
+
+        boolean removingAdmin = roleNames.contains(RoleName.ROLE_ADMIN);
+        if (removingAdmin && userRepository.countByRoleName(RoleName.ROLE_ADMIN) <= 1) {
+            // idk why i would ever want to remove the last admin xd
+            // but i'll leave it here just in case'
+            throw new ArticleApiException("Cannot remove the last admin in the system", HttpStatus.BAD_REQUEST);
         }
 
         if (user.getRoles().size() - rolesToRemove.size() < 1) {
-            throw new ArticleApiException(
-                    "Cannot remove all roles from user", HttpStatus.BAD_REQUEST);
+            throw new ArticleApiException("Cannot remove all roles from user", HttpStatus.BAD_REQUEST);
         }
 
         user.getRoles().removeAll(rolesToRemove);

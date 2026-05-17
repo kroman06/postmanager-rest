@@ -9,7 +9,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class CategoryControllerIT extends BaseIntegrationTest {
-    // US-04 Create category
+    // Create category
     @Test
     void createCategory_shouldReturn201_whenAdmin() throws Exception {
         mockMvc.perform(post("/categories")
@@ -58,7 +58,7 @@ class CategoryControllerIT extends BaseIntegrationTest {
                 .andExpect(status().isConflict());
     }
 
-    // US-05 Get categories
+    // Get categories
 
     @Test
     void getCategories_shouldReturn200_whenUnauthenticated() throws Exception {

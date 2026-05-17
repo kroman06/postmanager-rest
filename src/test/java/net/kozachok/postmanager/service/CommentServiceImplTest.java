@@ -49,7 +49,7 @@ class CommentServiceImplTest {
         return new CurrentUser(UUID.randomUUID(), Set.of(RoleName.ROLE_ADMIN));
     }
 
-    // ── find ───────────────────────────────────────────────
+    // find
 
     @Test
     void findByArticleId_shouldReturnCommentList_whenArticleExists() {
@@ -88,7 +88,7 @@ class CommentServiceImplTest {
         verify(commentRepository, never()).findAllByArticleId(any(), any());
     }
 
-    // ── create ───────────────────────────────────────────────
+    // create
 
     @Test
     void create_shouldThrowNotFound_whenAuthorNotExists() {
@@ -135,7 +135,7 @@ class CommentServiceImplTest {
         verify(commentRepository, never()).save(any());
     }
 
-    // ── delete ───────────────────────────────────────────────
+    // delete
 
     @Test
     void delete_shouldDelete_whenAdmin() {

@@ -60,7 +60,7 @@ class ArticleServiceImplTest {
         return article;
     }
 
-    // ── publish ──────────────────────────────────────────────
+    //  publish
 
     @Test
     void publish_shouldSetStatusPublished_whenDraftAndOwner() {
@@ -111,7 +111,7 @@ class ArticleServiceImplTest {
                 .isInstanceOf(InvalidStatusTransitionException.class);
     }
 
-    // ── archive ──────────────────────────────────────────────
+    // archive
 
     @Test
     void archive_shouldSetStatusArchived_whenPublishedAndOwner() {
@@ -158,7 +158,7 @@ class ArticleServiceImplTest {
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
-    // ── restore ──────────────────────────────────────────────
+    // restore
 
     @Test
     void restore_shouldSetStatusPublished_whenArchivedAndOwner() {
@@ -196,7 +196,7 @@ class ArticleServiceImplTest {
                 .isInstanceOf(InvalidStatusTransitionException.class);
     }
 
-    // ── delete ───────────────────────────────────────────────
+    // delete
 
     @Test
     void delete_shouldDelete_whenOwnerAndDraft() {
@@ -247,7 +247,7 @@ class ArticleServiceImplTest {
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
-    // ── create ───────────────────────────────────────────────
+    // create
 
     @Test
     void create_shouldSaveArticleWithDraftStatus() {
@@ -282,7 +282,7 @@ class ArticleServiceImplTest {
         verify(articleRepository, never()).save(any());
     }
 
-    // ── update ───────────────────────────────────────────────
+    // update
 
     @Test
     void update_shouldThrowForbidden_whenNotOwner() {

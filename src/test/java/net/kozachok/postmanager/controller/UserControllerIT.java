@@ -151,4 +151,21 @@ class UserControllerIT extends BaseIntegrationTest {
                         .content(objectMapper.writeValueAsString(new RoleRequest(Set.of(RoleName.ROLE_READER)))))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void removeRole_shouldReturn400_whenRemovingLastAdmin() throws Exception {
+        String adminBody = mockMvc.perform(get("/auth/me")
+                        .header("Authorization", adminToken()))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String id = objectMapper.readTree(adminBody).get("id").asString();
+
+        mockMvc.perform(delete("/admin/users/" + id + "/role")
+                        .header("Authorization", adminToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new RoleRequest(Set.of(RoleName.ROLE_ADMIN)))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Cannot remove the last admin in the system"));
+    }
 }

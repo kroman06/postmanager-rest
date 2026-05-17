@@ -17,7 +17,7 @@ class RefreshTokenTest {
         return token;
     }
 
-    // ── isExpired ────────────────────────────────────────────
+    // isExpired
 
     @Test
     void isExpired_shouldReturnFalse_whenExpiresAtIsInFuture() {
@@ -29,7 +29,7 @@ class RefreshTokenTest {
         assertThat(token(false, true).isExpired()).isTrue();
     }
 
-    // ── isValid ──────────────────────────────────────────────
+    // isValid
 
     @Test
     void isValid_shouldReturnTrue_whenNotRevokedAndNotExpired() {

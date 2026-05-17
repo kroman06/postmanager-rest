@@ -200,7 +200,7 @@ class ArticleControllerIT extends BaseIntegrationTest {
         mockMvc.perform(get("/articles/admin/all")).andExpect(status().isUnauthorized());
     }
 
-    // US-06 Create article
+    // Create article
 
     @Test
     void createArticle_shouldReturn201WithDraft_whenAuthor() throws Exception {
@@ -224,7 +224,7 @@ class ArticleControllerIT extends BaseIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
-    // US-07 Publish article
+    // Publish article
 
     @Test
     void publishArticle_shouldReturn200WithPublished_whenOwner() throws Exception {
@@ -268,7 +268,7 @@ class ArticleControllerIT extends BaseIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
-    // US-08 Update article
+    // Update article
 
     @Test
     void updateArticle_shouldReturn200_whenOwner() throws Exception {
@@ -325,7 +325,7 @@ class ArticleControllerIT extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.title").value("Updated"));
     }
 
-    // US-09 Archive article (Author)
+    // Archive article (Author)
 
     @Test
     void archiveArticle_shouldReturn200_whenOwnerAndPublished() throws Exception {
@@ -352,7 +352,7 @@ class ArticleControllerIT extends BaseIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
-    // US-12 Admin delete article
+    // Admin delete article
 
     @Test
     void deleteArticle_shouldReturn204_whenAdmin() throws Exception {
@@ -370,7 +370,7 @@ class ArticleControllerIT extends BaseIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
-    // US-13 Admin archives any article
+    // Admin archives any article
 
     @Test
     void archiveArticle_shouldReturn200_whenAdmin() throws Exception {
@@ -382,7 +382,7 @@ class ArticleControllerIT extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.status").value("ARCHIVED"));
     }
 
-    // US-14 Admin restores any article
+    // Admin restores any article
 
     @Test
     void restoreArticle_shouldReturn200_whenAdmin() throws Exception {
@@ -398,7 +398,7 @@ class ArticleControllerIT extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.status").value("PUBLISHED"));
     }
 
-    // US-15 Author restores own archived article
+    // Author restores own archived article
 
     @Test
     void restoreArticle_shouldReturn200_whenOwner() throws Exception {
@@ -437,7 +437,7 @@ class ArticleControllerIT extends BaseIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
-    // US-16 Get published articles
+    // Get published articles
 
     @Test
     void getPublishedArticles_shouldReturn200_whenUnauthenticated() throws Exception {
@@ -446,7 +446,7 @@ class ArticleControllerIT extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.content").isArray());
     }
 
-    // US-17 Get specific article
+    // Get specific article
 
     @Test
     void getArticleById_shouldReturn200_whenPublished() throws Exception {
@@ -468,8 +468,7 @@ class ArticleControllerIT extends BaseIntegrationTest {
         String body = mockMvc.perform(post("/articles")
                         .header("Authorization", author)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                new ArticleRequest("Draft", "Content", null))))
+                        .content(objectMapper.writeValueAsString(new ArticleRequest("Draft", "Content", null))))
                 .andReturn().getResponse().getContentAsString();
 
         String id = objectMapper.readTree(body).get("id").asString();
@@ -478,7 +477,7 @@ class ArticleControllerIT extends BaseIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
-    // US-11 Get own articles
+    // Get own articles
 
     @Test
     void getMyArticles_shouldReturn200_whenAuthor() throws Exception {
@@ -509,8 +508,7 @@ class ArticleControllerIT extends BaseIntegrationTest {
         String body = mockMvc.perform(post("/articles")
                         .header("Authorization", author)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                new ArticleRequest("Draft Title", "Content", null))))
+                        .content(objectMapper.writeValueAsString(new ArticleRequest("Draft Title", "Content", null))))
                 .andReturn().getResponse().getContentAsString();
 
         String id = objectMapper.readTree(body).get("id").asString();
@@ -519,5 +517,116 @@ class ArticleControllerIT extends BaseIntegrationTest {
                         .header("Authorization", author))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("Draft Title"));
+    }
+
+    @Test
+    void findByAuthor_shouldNotReturnDraftArticles() throws Exception {
+        String author = authorToken();
+        mockMvc.perform(post("/articles")
+                        .header("Authorization", author)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ArticleRequest("Draft", "Content", null))))
+                .andExpect(status().isCreated());
+
+        String authorId = objectMapper.readTree(
+                        mockMvc.perform(get("/auth/me")
+                                        .header("Authorization", author))
+                                .andReturn().getResponse().getContentAsString())
+                .get("id").asString();
+
+        mockMvc.perform(get("/articles/author/" + authorId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
+    void findByAuthor_shouldNotReturnArchivedArticles() throws Exception {
+        String id = createAndPublishArticle("author@test.com");
+        mockMvc.perform(patch("/articles/" + id + "/archive")
+                .header("Authorization", authorToken()));
+
+        String authorId = objectMapper.readTree(mockMvc.perform(get("/auth/me")
+                                 .header("Authorization", authorToken()))
+                                .andReturn().getResponse().getContentAsString())
+                .get("id").asString();
+
+        mockMvc.perform(get("/articles/author/" + authorId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
+    void findByAuthor_shouldReturnEmpty_whenAuthorNotExists() throws Exception {
+        mockMvc.perform(get("/articles/author/" + UUID.randomUUID()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
+    void findPublished_shouldReturnEmpty_whenCategoryIdNotExists() throws Exception {
+        createAndPublishArticle("author@test.com");
+
+        mockMvc.perform(get("/articles?categoryId=99999"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
+    void findAllArticles_shouldFilterByArchivedStatus_whenStatusProvided() throws Exception {
+        String id = createAndPublishArticle("author@test.com");
+        mockMvc.perform(patch("/articles/" + id + "/archive")
+                .header("Authorization", authorToken()));
+
+        createAndPublishArticle("author@test.com"); // published
+
+        mockMvc.perform(get("/articles/admin/all?status=ARCHIVED")
+                        .header("Authorization", adminToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    void findPublished_shouldNotReturnArticlesFromOtherCategories() throws Exception {
+        String admin = adminToken();
+        String author = authorToken();
+
+        String cat1Body = mockMvc.perform(post("/categories")
+                        .header("Authorization", admin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new CategoryRequest("Cat1", "desc"))))
+                .andReturn().getResponse().getContentAsString();
+        int cat1Id = objectMapper.readTree(cat1Body).get("id").intValue();
+
+        String cat2Body = mockMvc.perform(post("/categories")
+                        .header("Authorization", admin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new CategoryRequest("Cat2", "desc"))))
+                .andReturn().getResponse().getContentAsString();
+        int cat2Id = objectMapper.readTree(cat2Body).get("id").intValue();
+
+        String b1 = mockMvc.perform(post("/articles")
+                        .header("Authorization", author)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new ArticleRequest("A1", "C", cat1Id))))
+                .andReturn().getResponse().getContentAsString();
+        mockMvc.perform(patch("/articles/" + objectMapper.readTree(b1).get("id").asString() + "/publish")
+                .header("Authorization", author));
+
+        String b2 = mockMvc.perform(post("/articles")
+                        .header("Authorization", author)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new ArticleRequest("A2", "C", cat2Id))))
+                .andReturn().getResponse().getContentAsString();
+        mockMvc.perform(patch("/articles/" + objectMapper.readTree(b2).get("id").asString() + "/publish")
+                .header("Authorization", author));
+
+        mockMvc.perform(get("/articles?categoryId=" + cat1Id))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].categoryId").value(cat1Id));
     }
 }

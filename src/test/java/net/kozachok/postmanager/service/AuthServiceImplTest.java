@@ -47,7 +47,7 @@ class AuthServiceImplTest {
     @Mock private JwtProperties jwtProperties;
     @InjectMocks private AuthServiceImpl authService;
 
-    // ── register ─────────────────────────────────────────────
+    // register
 
     @Test
     void register_shouldSaveUserWithHashedPassword() {
@@ -82,7 +82,7 @@ class AuthServiceImplTest {
         verify(userRepository, never()).save(any());
     }
 
-    // ── login ────────────────────────────────────────────────
+    // login
 
     @Test
     void login_shouldReturnTokens_whenCredentialsValid() {
@@ -128,7 +128,7 @@ class AuthServiceImplTest {
                 .extracting("status").isEqualTo(HttpStatus.UNAUTHORIZED);
     }
 
-    // ── refresh ──────────────────────────────────────────────
+    // refresh
 
     @Test
     void refresh_shouldReturnNewTokens_andRevokeOld_whenTokenValid() {

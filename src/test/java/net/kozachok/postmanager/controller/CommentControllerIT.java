@@ -56,7 +56,33 @@ class CommentControllerIT extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.totalElements").value(1));
     }
 
-    // US-18 Add comment
+    @Test
+    void getCommentsByArticleId_shouldReturnPageResponse() throws Exception {
+        String articleId = createPublishedArticle();
+        String reader = readerToken();
+
+        for (int i = 0; i < 3; i++) {
+            mockMvc.perform(post("/articles/" + articleId + "/comments")
+                    .header("Authorization", reader)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(
+                            new CommentRequest("Comment " + i))));
+        }
+
+        mockMvc.perform(get("/articles/" + articleId + "/comments?page=0&size=2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.last").value(false))
+                .andExpect(jsonPath("$.content.length()").value(2));
+
+        mockMvc.perform(get("/articles/" + articleId + "/comments?page=1&size=2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.last").value(true))
+                .andExpect(jsonPath("$.content.length()").value(1));
+    }
+
+    // Add comment
 
     @Test
     void addComment_shouldReturn201_whenArticlePublished() throws Exception {
@@ -110,7 +136,7 @@ class CommentControllerIT extends BaseIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
-    // US-20 Admin delete comment
+    // Admin delete comment
 
     @Test
     void deleteComment_shouldReturn204_whenAdmin() throws Exception {

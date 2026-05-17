@@ -30,7 +30,7 @@ class AuthControllerIT extends BaseIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    // US-01 Registration
+    // Registration
     @Test
     void register_shouldReturn201_whenValidData() throws Exception {
         mockMvc.perform(post("/auth/register")
@@ -71,7 +71,7 @@ class AuthControllerIT extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.message").exists());
     }
 
-    // US-02 Login
+    // Login
 
     @Test
     void login_shouldReturnTokens_whenValidCredentials() throws Exception {
@@ -102,7 +102,7 @@ class AuthControllerIT extends BaseIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    // US-03 Refresh Token
+    // Refresh Token
     @Test
     void refresh_shouldReturnNewTokens_whenValidToken() throws Exception {
         String loginBody = mockMvc.perform(post("/auth/login")
