@@ -26,7 +26,6 @@ import java.util.Set;
 @RequiredArgsConstructor
 @Transactional
 public class AuthServiceImpl implements AuthService {
-
     private final UserRepository         userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final RoleRepository         roleRepository;
@@ -64,6 +63,15 @@ public class AuthServiceImpl implements AuthService {
         }
 
         return issueTokenPair(user);
+    }
+
+    @Override
+    public void logout(String rawRefreshToken) {
+        String hash = jwtService.hashToken(rawRefreshToken);
+        refreshTokenRepository.findByTokenHash(hash).ifPresent(stored -> {
+            stored.setRevoked(true);
+            refreshTokenRepository.save(stored);
+        });
     }
 
     @Override
