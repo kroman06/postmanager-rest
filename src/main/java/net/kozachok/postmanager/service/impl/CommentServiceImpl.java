@@ -12,17 +12,29 @@ import net.kozachok.postmanager.service.CommentService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class CommentServiceImpl implements CommentService {
-
     private final CommentRepository commentRepository;
     private final ArticleRepository articleRepository;
     private final UserRepository    userRepository;
     private final CommentMapper     commentMapper;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CommentResponse> findByArticleId(UUID articleId) {
+        if (!articleRepository.existsById(articleId)) {
+            throw new ResourceNotFoundException("Article", articleId);
+        }
+
+        return commentRepository.findAllByArticleId(articleId).stream()
+                .map(commentMapper::toResponse)
+                .toList();
+    }
 
     @Override
     public CommentResponse create(String content, UUID articleId, CurrentUser currentUser) {

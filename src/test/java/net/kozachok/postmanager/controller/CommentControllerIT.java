@@ -31,6 +31,15 @@ class CommentControllerIT extends BaseIntegrationTest {
         return id;
     }
 
+    // Invalid article
+
+    @Test
+    void getCommentsByArticleId_shouldReturn404_whenArticleNotExists() throws Exception {
+        mockMvc.perform(get("/articles/" + UUID.randomUUID() + "/comments"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
     // US-18 Add comment
 
     @Test

@@ -10,13 +10,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
 public class CommentController {
-
     private final CommentService commentService;
+
+    @GetMapping("/articles/{articleId}/comments")
+    public List<CommentResponse> findByArticleId(@PathVariable UUID articleId) {
+        return commentService.findByArticleId(articleId);
+    }
 
     @PostMapping("/articles/{articleId}/comments")
     @PreAuthorize("isAuthenticated()")

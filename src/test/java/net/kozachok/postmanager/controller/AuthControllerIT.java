@@ -43,6 +43,16 @@ class AuthControllerIT extends BaseIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    void register_shouldReturn400_whenPasswordIsTooShort() throws Exception {
+        mockMvc.perform(post("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new RegisterRequest("valid@test.com", "123", "John", "Doe"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
+    }
+
     // US-02 Login
 
     @Test
@@ -100,6 +110,30 @@ class AuthControllerIT extends BaseIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new RefreshTokenRequest("invalid.jwt.token"))))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void logout_shouldRevokeToken_whenValidToken() throws Exception {
+        String loginBody = mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new LoginRequest("reader@test.com", TEST_PASSWORD))))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+
+        String refreshToken = objectMapper.readTree(loginBody).get("refreshToken").asString();
+
+        mockMvc.perform(post("/auth/logout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new RefreshTokenRequest(refreshToken))))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(post("/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new RefreshTokenRequest(refreshToken))))
                 .andExpect(status().isUnauthorized());
     }
 }

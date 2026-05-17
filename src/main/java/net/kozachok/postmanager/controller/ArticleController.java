@@ -52,6 +52,12 @@ public class ArticleController {
         return articleService.create(request, SecurityUtils.getCurrentUser());
     }
 
+    @GetMapping("/my/{id}")
+    @PreAuthorize("hasRole('AUTHOR')")
+    public ArticleResponse findMyById(@PathVariable UUID id) {
+        return articleService.findMyById(id, SecurityUtils.getCurrentUser());
+    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('AUTHOR')")
     public ArticleResponse update(@PathVariable UUID id,

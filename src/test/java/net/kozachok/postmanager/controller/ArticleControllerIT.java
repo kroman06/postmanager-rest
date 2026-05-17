@@ -32,6 +32,36 @@ class ArticleControllerIT extends BaseIntegrationTest {
         return id;
     }
 
+    // Pagination
+
+    @Test
+    void findPublished_shouldReturnPaginatedResult() throws Exception {
+        String authorToken = authorToken();
+        for (int i = 0; i < 12; i++) {
+            String body = mockMvc.perform(post("/articles")
+                            .header("Authorization", authorToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(
+                                    new ArticleRequest("Title " + i, "Content " + i, null))))
+                    .andExpect(status().isCreated())
+                    .andReturn().getResponse().getContentAsString();
+
+            String id = objectMapper.readTree(body).get("id").asString();
+            mockMvc.perform(patch("/articles/" + id + "/publish")
+                            .header("Authorization", authorToken))
+                    .andExpect(status().isOk());
+        }
+
+        mockMvc.perform(get("/articles?page=0&size=10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray())
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(10))
+                .andExpect(jsonPath("$.totalElements").value(12))
+                .andExpect(jsonPath("$.totalPages").value(2))
+                .andExpect(jsonPath("$.last").value(false));
+    }
+
     // US-06 Create article
 
     @Test
@@ -185,5 +215,13 @@ class ArticleControllerIT extends BaseIntegrationTest {
         mockMvc.perform(get("/articles/my")
                         .header("Authorization", readerToken()))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void findMyById_shouldReturn404_whenArticleNotExists() throws Exception {
+        mockMvc.perform(get("/articles/my/" + UUID.randomUUID())
+                        .header("Authorization", authorToken()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").exists());
     }
 }

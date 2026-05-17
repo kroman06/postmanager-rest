@@ -10,6 +10,7 @@ import java.util.UUID;
 
 public interface ArticleService {
     ArticleResponse create(ArticleRequest request, CurrentUser currentUser);
+    ArticleResponse findMyById(UUID id, CurrentUser currentUser);
     ArticleResponse update(UUID id, ArticleRequest request, CurrentUser currentUser);
     ArticleResponse publish(UUID id, CurrentUser currentUser);
     ArticleResponse archive(UUID id, CurrentUser currentUser);

@@ -44,6 +44,19 @@ public class ArticleServiceImpl implements ArticleService {
         return articleMapper.toResponse(articleRepository.save(article));
     }
 
+    @Transactional(readOnly = true)
+    @Override
+    public ArticleResponse findMyById(UUID id, CurrentUser currentUser) {
+        Article article = articleRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Article", id));
+
+        if (!article.isOwnedBy(currentUser.id())) {
+            throw new AccessForbiddenException();
+        }
+
+        return articleMapper.toResponse(article);
+    }
+
     @Override
     public ArticleResponse update(UUID id, ArticleRequest request, CurrentUser currentUser) {
         Article article = findOrThrow(id);

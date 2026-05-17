@@ -29,7 +29,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postmanager
       DB_USERNAME: postgres
       DB_PASSWORD: postgres
-      JWT_SECRET: 5a7d3f9b2e1c8d4f6a0b3e7c9d2f1a8b4c6e0f3a7d5b9c1e4f2a6b8d0c3e5f7
+      JWT_SECRET: ${JWT_SECRET}
       TZ: Europe/Kyiv
     depends_on:
       postgres:
