@@ -39,7 +39,7 @@ public abstract class BaseIntegrationTest {
     private static final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
     @ServiceConnection
-    public static final PostgreSQLContainer postgres = new PostgreSQLContainer(
+    private static final PostgreSQLContainer postgres = new PostgreSQLContainer(
             dotenv.get("POSTGRES_IMAGE_VERSION", "postgres:18.4")
     );
 

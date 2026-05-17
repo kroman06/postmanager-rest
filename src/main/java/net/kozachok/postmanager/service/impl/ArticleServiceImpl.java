@@ -65,6 +65,9 @@ public class ArticleServiceImpl implements ArticleService {
             throw new AccessForbiddenException();
         }
 
+        // note: Редагування дозволено для будь-якого статусу.
+        // note: Якщо стаття опублікована - зміни одразу відображаються для читачів
+
         article.setTitle(request.title());
         article.setContent(request.content());
         article.setCategory(resolveCategory(request.categoryId()));
@@ -137,7 +140,7 @@ public class ArticleServiceImpl implements ArticleService {
             throw new AccessForbiddenException();
         }
 
-        if (!article.canPublish()) { // canPublish() is status == DRAFT
+        if (!article.isDraft()) {
             throw new InvalidStatusTransitionException(article.getStatus(), ArticleStatus.DRAFT);
         }
 

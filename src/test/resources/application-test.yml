@@ -1,6 +1,4 @@
 spring:
-  datasource:
-    url: jdbc:postgresql://localhost:5432/postmanager_test
   flyway:
     enabled: true
     locations: classpath:db/migration

@@ -48,6 +48,10 @@ public class Article extends BaseEntity {
     }
 
     public boolean canPublish() {
+        return isDraft();
+    }
+
+    public boolean isDraft() {
         return status == ArticleStatus.DRAFT;
     }
 

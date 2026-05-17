@@ -15,10 +15,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
@@ -42,7 +44,55 @@ class CommentServiceImplTest {
         return new CurrentUser(UUID.randomUUID(), Set.of(RoleName.ROLE_ADMIN));
     }
 
+    // ── find ───────────────────────────────────────────────
+
+    @Test
+    void findByArticleId_shouldReturnCommentList_whenArticleExists() {
+        User author = new User();
+        author.setId(UUID.randomUUID());
+        author.setFirstName("John");
+        author.setLastName("Doe");
+
+        Comment comment = new Comment();
+        comment.setContent("Hello");
+        comment.setAuthor(author);
+
+        when(articleRepository.existsById(ARTICLE_ID)).thenReturn(true);
+        when(commentRepository.findAllByArticleId(ARTICLE_ID)).thenReturn(List.of(comment));
+        when(commentMapper.toResponse(comment)).thenReturn(mock(CommentResponse.class));
+
+        List<CommentResponse> result = commentService.findByArticleId(ARTICLE_ID);
+
+        assertThat(result).hasSize(1);
+        verify(commentMapper).toResponse(comment);
+    }
+
+    @Test
+    void findByArticleId_shouldThrowNotFound_whenArticleNotExists() {
+        when(articleRepository.existsById(ARTICLE_ID)).thenReturn(false);
+
+        assertThatThrownBy(() -> commentService.findByArticleId(ARTICLE_ID))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+        verify(commentRepository, never()).findAllByArticleId(any());
+    }
+
     // ── create ───────────────────────────────────────────────
+
+    @Test
+    void create_shouldThrowNotFound_whenAuthorNotExists() {
+        Article article = new Article();
+        article.setStatus(ArticleStatus.PUBLISHED);
+
+        when(articleRepository.findByIdAndStatus(ARTICLE_ID, ArticleStatus.PUBLISHED))
+                .thenReturn(Optional.of(article));
+        when(userRepository.findById(AUTHOR_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> commentService.create("text", ARTICLE_ID, authorUser()))
+                .isInstanceOf(ResourceNotFoundException.class);
+
+        verify(commentRepository, never()).save(any());
+    }
 
     @Test
     void create_shouldSaveComment_whenArticleIsPublished() {

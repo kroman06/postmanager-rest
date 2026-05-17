@@ -88,6 +88,22 @@ class CategoryServiceImplTest {
                 .isInstanceOf(CategoryAlreadyExistsException.class);
     }
 
+    @Test
+    void update_shouldSaveCategory_whenNameRemainsTheSame() {
+        Category existing = new Category();
+        existing.setName("Same Name");
+        existing.setDescription("Old description");
+
+        when(categoryRepository.findById(1)).thenReturn(Optional.of(existing));
+        when(categoryRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(categoryMapper.toResponse(any())).thenReturn(mock(CategoryResponse.class));
+
+        categoryService.update(1, new CategoryRequest("Same Name", "New description"));
+
+        verify(categoryRepository, never()).existsByName(anyString());
+        verify(categoryRepository).save(argThat(c -> c.getDescription().equals("New description")));
+    }
+
     // ── delete ───────────────────────────────────────────────
 
     @Test

@@ -62,6 +62,25 @@ class ArticleControllerIT extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.last").value(false));
     }
 
+    // findMyById — not owner
+
+    @Test
+    void findMyById_shouldReturn403_whenNotOwner() throws Exception {
+        createUser("other@test.com", RoleName.ROLE_AUTHOR);
+        String body = mockMvc.perform(post("/articles")
+                        .header("Authorization", authorToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new ArticleRequest("Title", "Content", null))))
+                .andReturn().getResponse().getContentAsString();
+
+        String id = objectMapper.readTree(body).get("id").asString();
+
+        mockMvc.perform(get("/articles/my/" + id)
+                        .header("Authorization", getToken("other@test.com")))
+                .andExpect(status().isForbidden());
+    }
+
     // US-06 Create article
 
     @Test
@@ -130,6 +149,49 @@ class ArticleControllerIT extends BaseIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    // US-08 Update article
+
+    @Test
+    void updateArticle_shouldReturn200_whenOwner() throws Exception {
+        String author = authorToken();
+        String body = mockMvc.perform(post("/articles")
+                        .header("Authorization", author)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new ArticleRequest("Original", "Content", null))))
+                .andReturn().getResponse().getContentAsString();
+
+        String id = objectMapper.readTree(body).get("id").asString();
+
+        mockMvc.perform(put("/articles/" + id)
+                        .header("Authorization", author)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new ArticleRequest("Updated Title", "Updated Content", null))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Updated Title"));
+    }
+
+    @Test
+    void updateArticle_shouldReturn403_whenNotOwner() throws Exception {
+        createUser("other@test.com", RoleName.ROLE_AUTHOR);
+        String body = mockMvc.perform(post("/articles")
+                        .header("Authorization", authorToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new ArticleRequest("Title", "Content", null))))
+                .andReturn().getResponse().getContentAsString();
+
+        String id = objectMapper.readTree(body).get("id").asString();
+
+        mockMvc.perform(put("/articles/" + id)
+                        .header("Authorization", getToken("other@test.com"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new ArticleRequest("Hacked", "Content", null))))
+                .andExpect(status().isForbidden());
+    }
+
     // US-09 Archive article (Author)
 
     @Test
@@ -171,6 +233,73 @@ class ArticleControllerIT extends BaseIntegrationTest {
     void deleteArticle_shouldReturn400_whenAuthorDeletesPublished() throws Exception {
         String id = createAndPublishArticle("author@test.com");
         mockMvc.perform(delete("/articles/" + id)
+                        .header("Authorization", authorToken()))
+                .andExpect(status().isBadRequest());
+    }
+
+    // US-13 Admin archives any article
+
+    @Test
+    void archiveArticle_shouldReturn200_whenAdmin() throws Exception {
+        String id = createAndPublishArticle("author@test.com");
+
+        mockMvc.perform(patch("/articles/" + id + "/archive")
+                        .header("Authorization", adminToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+    }
+
+    // US-14 Admin restores any article
+
+    @Test
+    void restoreArticle_shouldReturn200_whenAdmin() throws Exception {
+        String id = createAndPublishArticle("author@test.com");
+
+        mockMvc.perform(patch("/articles/" + id + "/archive")
+                        .header("Authorization", authorToken()))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(patch("/articles/" + id + "/restore")
+                        .header("Authorization", adminToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PUBLISHED"));
+    }
+
+    // US-15 Author restores own archived article
+
+    @Test
+    void restoreArticle_shouldReturn200_whenOwner() throws Exception {
+        String id = createAndPublishArticle("author@test.com");
+
+        mockMvc.perform(patch("/articles/" + id + "/archive")
+                        .header("Authorization", authorToken()))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(patch("/articles/" + id + "/restore")
+                        .header("Authorization", authorToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("PUBLISHED"));
+    }
+
+    @Test
+    void restoreArticle_shouldReturn403_whenNotOwnerAndNotAdmin() throws Exception {
+        createUser("other@test.com", RoleName.ROLE_AUTHOR);
+        String id = createAndPublishArticle("author@test.com");
+
+        mockMvc.perform(patch("/articles/" + id + "/archive")
+                        .header("Authorization", authorToken()))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(patch("/articles/" + id + "/restore")
+                        .header("Authorization", getToken("other@test.com")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void restoreArticle_shouldReturn400_whenNotArchived() throws Exception {
+        String id = createAndPublishArticle("author@test.com");
+
+        mockMvc.perform(patch("/articles/" + id + "/restore")
                         .header("Authorization", authorToken()))
                 .andExpect(status().isBadRequest());
     }
