@@ -1,6 +1,5 @@
 package net.kozachok.postmanager;
 
-import tools.jackson.databind.ObjectMapper;
 import net.kozachok.postmanager.domain.Role;
 import net.kozachok.postmanager.domain.RoleName;
 import net.kozachok.postmanager.domain.User;
@@ -15,7 +14,9 @@ import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.Set;
 
@@ -25,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@ContextConfiguration(initializers = TestDatabaseInitializer.class)
 public abstract class BaseIntegrationTest {
     @Autowired protected MockMvc        mockMvc;
     @Autowired protected ObjectMapper   objectMapper;
@@ -44,6 +46,7 @@ public abstract class BaseIntegrationTest {
         createUser("reader@test.com", RoleName.ROLE_READER);
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     protected User createUser(String email, RoleName role) {
         Role r = roleRepository.findByName(role).orElseThrow();
         User user = new User();
@@ -62,7 +65,7 @@ public abstract class BaseIntegrationTest {
                                 new LoginRequest(email, TEST_PASSWORD))))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
-        return "Bearer " + objectMapper.readTree(body).get("accessToken").asText();
+        return "Bearer " + objectMapper.readTree(body).get("accessToken").asString();
     }
 
     protected String adminToken() throws Exception {

@@ -137,7 +137,7 @@ class ArticleControllerIT extends BaseIntegrationTest {
     }
 
     @Test
-    void deleteArticle_shouldReturn403_whenAuthorTriesToDeletePublished() throws Exception {
+    void deleteArticle_shouldReturn400_whenAuthorDeletesPublished() throws Exception {
         String id = createAndPublishArticle("author@test.com");
         mockMvc.perform(delete("/articles/" + id)
                         .header("Authorization", authorToken()))
