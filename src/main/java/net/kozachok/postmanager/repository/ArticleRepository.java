@@ -22,9 +22,6 @@ public interface ArticleRepository extends JpaRepository<Article, UUID> {
     Optional<Article> findByIdAndStatus(UUID id, ArticleStatus status);
 
     @EntityGraph(attributePaths = {"author", "category"})
-    Page<Article> findAllByStatus(ArticleStatus status, Pageable pageable);
-
-    @EntityGraph(attributePaths = {"author", "category"})
     Page<Article> findAllByStatusIn(List<ArticleStatus> statuses, Pageable pageable);
 
     @EntityGraph(attributePaths = {"author", "category"})

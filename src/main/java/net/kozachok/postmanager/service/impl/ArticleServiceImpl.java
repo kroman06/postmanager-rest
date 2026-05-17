@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -162,18 +163,18 @@ public class ArticleServiceImpl implements ArticleService {
     @Transactional(readOnly = true)
     public PageResponse<ArticleResponse> findPublished(Pageable pageable, Integer categoryId) {
         Page<Article> page = categoryId != null
-                ? articleRepository.findAllByStatusAndCategoryId(
-                ArticleStatus.PUBLISHED, categoryId, pageable)
-                : articleRepository.findAllByStatus(ArticleStatus.PUBLISHED, pageable);
+                ? articleRepository.findAllByStatusAndCategoryId(ArticleStatus.PUBLISHED, categoryId, pageable)
+                : articleRepository.findAllByStatusIn(List.of(ArticleStatus.PUBLISHED), pageable);
         return toPage(page);
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ArticleResponse> findAll(Pageable pageable, ArticleStatus status) {
-        Page<Article> page = status != null
-                ? articleRepository.findAllByStatus(status, pageable)
-                : articleRepository.findAll(pageable);
+        Page<Article> page = articleRepository.findAllByStatusIn(
+                status != null ? List.of(status) : List.of(ArticleStatus.values()),
+                pageable
+        );
         return toPage(page);
     }
 
