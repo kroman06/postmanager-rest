@@ -1,5 +1,6 @@
 package net.kozachok.postmanager.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import net.kozachok.postmanager.domain.ArticleStatus;
@@ -23,6 +24,10 @@ public class ArticleController {
 
     private final ArticleService articleService;
 
+    @Operation(
+            summary = "Get published articles",
+            description = "Returns a paginated list of published articles. Optionally filters articles by category."
+    )
     @GetMapping
     public PageResponse<ArticleResponse> findPublished(
             @RequestParam(defaultValue = "0")  int page,
@@ -33,6 +38,10 @@ public class ArticleController {
                 categoryId);
     }
 
+    @Operation(
+            summary = "Get all articles for admin",
+            description = "Returns a paginated list of all articles for administrators. Optionally filters articles by status."
+    )
     @GetMapping("/admin/all")
     @PreAuthorize("hasRole('ADMIN')")
     public PageResponse<ArticleResponse> findAll(
@@ -44,17 +53,29 @@ public class ArticleController {
                 status);
     }
 
+    @Operation(
+            summary = "Get published article by ID",
+            description = "Returns a published article by its unique identifier."
+    )
     @GetMapping("/{id}")
     public ArticleResponse findById(@PathVariable UUID id) {
         return articleService.findById(id);
     }
 
+    @Operation(
+            summary = "Get own article by ID",
+            description = "Returns an article owned by the currently authenticated author."
+    )
     @GetMapping("/my/{id}")
     @PreAuthorize("hasRole('AUTHOR')")
     public ArticleResponse findMyById(@PathVariable UUID id) {
         return articleService.findMyById(id, SecurityUtils.getCurrentUser());
     }
 
+    @Operation(
+            summary = "Get current author's articles",
+            description = "Returns a paginated list of articles created by the currently authenticated author."
+    )
     @GetMapping("/my")
     @PreAuthorize("hasRole('AUTHOR')")
     public PageResponse<ArticleResponse> findMy(
@@ -65,6 +86,10 @@ public class ArticleController {
                 currentUser.id(), PageRequest.of(page, size, Sort.by("createdAt").descending()));
     }
 
+    @Operation(
+            summary = "Get published articles by author",
+            description = "Returns a paginated list of published articles created by the specified author."
+    )
     @GetMapping("/author/{authorId}")
     public PageResponse<ArticleResponse> findByAuthor(
             @PathVariable UUID authorId,
@@ -75,6 +100,10 @@ public class ArticleController {
                 authorId, PageRequest.of(page, size, Sort.by("publishedAt").descending()));
     }
 
+    @Operation(
+            summary = "Create article",
+            description = "Creates a new draft article for the currently authenticated author."
+    )
     @PostMapping
     @PreAuthorize("hasRole('AUTHOR')")
     @ResponseStatus(HttpStatus.CREATED)
@@ -82,6 +111,10 @@ public class ArticleController {
         return articleService.create(request, SecurityUtils.getCurrentUser());
     }
 
+    @Operation(
+            summary = "Update article",
+            description = "Updates an article owned by the currently authenticated author."
+    )
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('AUTHOR')")
     public ArticleResponse update(@PathVariable UUID id,
@@ -89,24 +122,40 @@ public class ArticleController {
         return articleService.update(id, request, SecurityUtils.getCurrentUser());
     }
 
+    @Operation(
+            summary = "Publish article",
+            description = "Publishes a draft article owned by the currently authenticated author."
+    )
     @PatchMapping("/{id}/publish")
     @PreAuthorize("hasRole('AUTHOR')")
     public ArticleResponse publish(@PathVariable UUID id) {
         return articleService.publish(id, SecurityUtils.getCurrentUser());
     }
 
+    @Operation(
+            summary = "Archive article",
+            description = "Archives a published article. Authors can archive their own articles, administrators can archive any article."
+    )
     @PatchMapping("/{id}/archive")
     @PreAuthorize("hasAnyRole('AUTHOR', 'ADMIN')")
     public ArticleResponse archive(@PathVariable UUID id) {
         return articleService.archive(id, SecurityUtils.getCurrentUser());
     }
 
+    @Operation(
+            summary = "Restore article",
+            description = "Restores an archived article back to published status. Authors can restore their own articles, administrators can restore any article."
+    )
     @PatchMapping("/{id}/restore")
     @PreAuthorize("hasAnyRole('AUTHOR', 'ADMIN')")
     public ArticleResponse restore(@PathVariable UUID id) {
         return articleService.restore(id, SecurityUtils.getCurrentUser());
     }
 
+    @Operation(
+            summary = "Delete article",
+            description = "Deletes an article. Administrators can delete any article, authors can delete only their own draft articles."
+    )
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('AUTHOR', 'ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)

@@ -1,5 +1,6 @@
 package net.kozachok.postmanager.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import net.kozachok.postmanager.dto.request.CommentRequest;
@@ -20,6 +21,10 @@ import java.util.UUID;
 public class CommentController {
     private final CommentService commentService;
 
+    @Operation(
+            summary = "Get article comments",
+            description = "Returns a paginated list of comments for the specified article."
+    )
     @GetMapping("/articles/{articleId}/comments")
     public PageResponse<CommentResponse> findByArticleId(
             @PathVariable UUID articleId,
@@ -29,6 +34,10 @@ public class CommentController {
                 articleId, PageRequest.of(page, size, Sort.by("createdAt").ascending()));
     }
 
+    @Operation(
+            summary = "Create comment",
+            description = "Creates a new comment for the specified published article. Requires authentication."
+    )
     @PostMapping("/articles/{articleId}/comments")
     @PreAuthorize("isAuthenticated()")
     @ResponseStatus(HttpStatus.CREATED)
@@ -37,6 +46,10 @@ public class CommentController {
         return commentService.create(request.content(), articleId, SecurityUtils.getCurrentUser());
     }
 
+    @Operation(
+            summary = "Delete comment",
+            description = "Deletes a comment by its identifier. Requires administrator role."
+    )
     @DeleteMapping("/comments/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @ResponseStatus(HttpStatus.NO_CONTENT)
