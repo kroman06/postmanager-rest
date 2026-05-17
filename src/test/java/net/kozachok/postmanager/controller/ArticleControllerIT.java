@@ -292,6 +292,20 @@ class ArticleControllerIT extends BaseIntegrationTest {
     }
 
     @Test
+    void updateArticle_shouldReturn200_whenArticleIsPublished() throws Exception {
+        String author = authorToken();
+        String id = createAndPublishArticle("author@test.com");
+
+        mockMvc.perform(put("/articles/" + id)
+                        .header("Authorization", author)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new ArticleRequest("Updated", "Content", null))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Updated"));
+    }
+
+    @Test
     void updateArticle_shouldReturn403_whenNotOwner() throws Exception {
         createUser("other@test.com", RoleName.ROLE_AUTHOR);
         String body = mockMvc.perform(post("/articles")
@@ -312,17 +326,30 @@ class ArticleControllerIT extends BaseIntegrationTest {
     }
 
     @Test
-    void updateArticle_shouldReturn200_whenArticleIsPublished() throws Exception {
+    void updateArticle_shouldRemoveCategory_whenCategoryIdIsNull() throws Exception {
+        String admin = adminToken();
         String author = authorToken();
-        String id = createAndPublishArticle("author@test.com");
 
-        mockMvc.perform(put("/articles/" + id)
+        String catBody = mockMvc.perform(post("/categories")
+                        .header("Authorization", admin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new CategoryRequest("Tech", "desc"))))
+                .andReturn().getResponse().getContentAsString();
+        int catId = objectMapper.readTree(catBody).get("id").intValue();
+
+        String artBody = mockMvc.perform(post("/articles")
                         .header("Authorization", author)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                new ArticleRequest("Updated", "Content", null))))
+                        .content(objectMapper.writeValueAsString(new ArticleRequest("Title", "Content", catId))))
+                .andReturn().getResponse().getContentAsString();
+        String artId = objectMapper.readTree(artBody).get("id").asString();
+
+        mockMvc.perform(put("/articles/" + artId)
+                        .header("Authorization", author)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ArticleRequest("Title", "Content", null))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("Updated"));
+                .andExpect(jsonPath("$.categoryId").isEmpty());
     }
 
     // Archive article (Author)

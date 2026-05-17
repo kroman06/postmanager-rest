@@ -66,7 +66,7 @@ class CommentServiceImplTest {
 
         Page<Comment> page = new PageImpl<>(List.of(comment));
 
-        when(articleRepository.existsById(ARTICLE_ID)).thenReturn(true);
+        when(articleRepository.existsByIdAndStatus(ARTICLE_ID, ArticleStatus.PUBLISHED)).thenReturn(true);
         when(commentRepository.findAllByArticleId(ARTICLE_ID, pageable)).thenReturn(page);
         when(commentMapper.toResponse(comment)).thenReturn(mock(CommentResponse.class));
 
@@ -80,7 +80,8 @@ class CommentServiceImplTest {
     void findByArticleId_shouldThrowNotFound_whenArticleNotExists() {
         Pageable pageable = PageRequest.of(0, 20);
 
-        when(articleRepository.existsById(ARTICLE_ID)).thenReturn(false);
+        when(articleRepository.existsByIdAndStatus(ARTICLE_ID, ArticleStatus.PUBLISHED))
+                .thenReturn(false);
 
         assertThatThrownBy(() -> commentService.findByArticleId(ARTICLE_ID, pageable))
                 .isInstanceOf(ResourceNotFoundException.class);

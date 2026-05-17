@@ -31,7 +31,22 @@ class CommentControllerIT extends BaseIntegrationTest {
         return id;
     }
 
-    // Invalid article
+    // ----------------------------------- TESTS ----------------------------------------------- //
+
+    @Test
+    void getCommentsByArticleId_shouldReturn404_whenArticleIsDraft() throws Exception {
+        String author = authorToken();
+        String body = mockMvc.perform(post("/articles")
+                        .header("Authorization", author)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new ArticleRequest("Draft", "Content", null))))
+                .andReturn().getResponse().getContentAsString();
+        String draftId = objectMapper.readTree(body).get("id").asString();
+
+        mockMvc.perform(get("/articles/" + draftId + "/comments"))
+                .andExpect(status().isNotFound());
+    }
 
     @Test
     void getCommentsByArticleId_shouldReturn404_whenArticleNotExists() throws Exception {

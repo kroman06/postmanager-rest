@@ -102,6 +102,28 @@ class AuthControllerIT extends BaseIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    @Test
+    void login_shouldInvalidatePreviousRefreshToken_whenLoginAgain() throws Exception {
+        String firstLogin = mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new LoginRequest("reader@test.com", TEST_PASSWORD))))
+                .andReturn().getResponse().getContentAsString();
+        String oldRefreshToken = objectMapper.readTree(firstLogin).get("refreshToken").asString();
+
+        mockMvc.perform(post("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new LoginRequest("reader@test.com", TEST_PASSWORD))))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new RefreshTokenRequest(oldRefreshToken))))
+                .andExpect(status().isUnauthorized());
+    }
+
     // Refresh Token
     @Test
     void refresh_shouldReturnNewTokens_whenValidToken() throws Exception {

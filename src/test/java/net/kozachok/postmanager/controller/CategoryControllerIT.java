@@ -1,12 +1,14 @@
 package net.kozachok.postmanager.controller;
 
 import net.kozachok.postmanager.BaseIntegrationTest;
+import net.kozachok.postmanager.dto.request.ArticleRequest;
 import net.kozachok.postmanager.dto.request.CategoryRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class CategoryControllerIT extends BaseIntegrationTest {
     // Create category
@@ -155,6 +157,39 @@ class CategoryControllerIT extends BaseIntegrationTest {
     }
 
     // Delete category
+
+    @Test
+    void deleteCategory_shouldSetArticleCategoryToNull_whenCategoryDeleted() throws Exception {
+        String admin = adminToken();
+        String author = authorToken();
+
+        String catBody = mockMvc.perform(post("/categories")
+                        .header("Authorization", admin)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new CategoryRequest("ToDelete", "desc"))))
+                .andReturn().getResponse().getContentAsString();
+        int catId = objectMapper.readTree(catBody).get("id").intValue();
+
+        String artBody = mockMvc.perform(post("/articles")
+                        .header("Authorization", author)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new ArticleRequest("Title", "Content", catId))))
+                .andReturn().getResponse().getContentAsString();
+        String artId = objectMapper.readTree(artBody).get("id").asString();
+        mockMvc.perform(patch("/articles/" + artId + "/publish")
+                .header("Authorization", author));
+
+        mockMvc.perform(delete("/categories/" + catId)
+                        .header("Authorization", admin))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/articles/" + artId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.categoryId").isEmpty())
+                .andExpect(jsonPath("$.categoryName").isEmpty());
+    }
 
     @Test
     void deleteCategory_shouldReturn401_whenUnauthenticated() throws Exception {

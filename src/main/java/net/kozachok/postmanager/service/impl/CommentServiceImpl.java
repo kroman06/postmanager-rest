@@ -30,7 +30,7 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional(readOnly = true)
     public PageResponse<CommentResponse> findByArticleId(UUID articleId, Pageable pageable) {
-        if (!articleRepository.existsById(articleId)) {
+        if (!articleRepository.existsByIdAndStatus(articleId, ArticleStatus.PUBLISHED)) {
             throw new ResourceNotFoundException("Article", articleId);
         }
         Page<Comment> page = commentRepository.findAllByArticleId(articleId, pageable);

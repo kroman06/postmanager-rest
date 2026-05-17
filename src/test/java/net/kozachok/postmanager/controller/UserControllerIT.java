@@ -74,6 +74,23 @@ class UserControllerIT extends BaseIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
+    @Test
+    void addRole_shouldBeIdempotent_whenRoleAlreadyAssigned() throws Exception {
+        String readerBody = mockMvc.perform(get("/auth/me")
+                        .header("Authorization", readerToken()))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String id = objectMapper.readTree(readerBody).get("id").asString();
+
+        mockMvc.perform(patch("/admin/users/" + id + "/role")
+                        .header("Authorization", adminToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new RoleRequest(Set.of(RoleName.ROLE_READER)))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.roles.length()").value(1));
+    }
+
     // remove
 
     @Test
