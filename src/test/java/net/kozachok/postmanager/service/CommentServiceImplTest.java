@@ -2,6 +2,7 @@ package net.kozachok.postmanager.service;
 
 import net.kozachok.postmanager.domain.*;
 import net.kozachok.postmanager.dto.response.CommentResponse;
+import net.kozachok.postmanager.dto.response.PageResponse;
 import net.kozachok.postmanager.exception.AccessForbiddenException;
 import net.kozachok.postmanager.exception.ResourceNotFoundException;
 import net.kozachok.postmanager.mapper.CommentMapper;
@@ -14,6 +15,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -48,6 +53,8 @@ class CommentServiceImplTest {
 
     @Test
     void findByArticleId_shouldReturnCommentList_whenArticleExists() {
+        Pageable pageable = PageRequest.of(0, 20);
+
         User author = new User();
         author.setId(UUID.randomUUID());
         author.setFirstName("John");
@@ -57,24 +64,28 @@ class CommentServiceImplTest {
         comment.setContent("Hello");
         comment.setAuthor(author);
 
+        Page<Comment> page = new PageImpl<>(List.of(comment));
+
         when(articleRepository.existsById(ARTICLE_ID)).thenReturn(true);
-        when(commentRepository.findAllByArticleId(ARTICLE_ID)).thenReturn(List.of(comment));
+        when(commentRepository.findAllByArticleId(ARTICLE_ID, pageable)).thenReturn(page);
         when(commentMapper.toResponse(comment)).thenReturn(mock(CommentResponse.class));
 
-        List<CommentResponse> result = commentService.findByArticleId(ARTICLE_ID);
+        PageResponse<CommentResponse> result = commentService.findByArticleId(ARTICLE_ID, pageable);
 
-        assertThat(result).hasSize(1);
+        assertThat(result.content()).hasSize(1);
         verify(commentMapper).toResponse(comment);
     }
 
     @Test
     void findByArticleId_shouldThrowNotFound_whenArticleNotExists() {
+        Pageable pageable = PageRequest.of(0, 20);
+
         when(articleRepository.existsById(ARTICLE_ID)).thenReturn(false);
 
-        assertThatThrownBy(() -> commentService.findByArticleId(ARTICLE_ID))
+        assertThatThrownBy(() -> commentService.findByArticleId(ARTICLE_ID, pageable))
                 .isInstanceOf(ResourceNotFoundException.class);
 
-        verify(commentRepository, never()).findAllByArticleId(any());
+        verify(commentRepository, never()).findAllByArticleId(any(), any());
     }
 
     // ── create ───────────────────────────────────────────────
@@ -122,48 +133,6 @@ class CommentServiceImplTest {
                 .isInstanceOf(ResourceNotFoundException.class);
 
         verify(commentRepository, never()).save(any());
-    }
-
-    // ── update ───────────────────────────────────────────────
-
-    @Test
-    void update_shouldUpdateContent_whenOwner() {
-        User author = new User();
-        author.setId(AUTHOR_ID);
-
-        Comment comment = new Comment();
-        comment.setContent("old");
-        comment.setAuthor(author);
-
-        when(commentRepository.findById(COMMENT_ID)).thenReturn(Optional.of(comment));
-        when(commentRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(commentMapper.toResponse(any())).thenReturn(mock(CommentResponse.class));
-
-        commentService.update(COMMENT_ID, "new content", authorUser());
-
-        verify(commentRepository).save(argThat(c -> c.getContent().equals("new content")));
-    }
-
-    @Test
-    void update_shouldThrowForbidden_whenNotOwner() {
-        User author = new User();
-        author.setId(UUID.randomUUID());
-
-        Comment comment = new Comment();
-        comment.setAuthor(author);
-
-        when(commentRepository.findById(COMMENT_ID)).thenReturn(Optional.of(comment));
-
-        assertThatThrownBy(() -> commentService.update(COMMENT_ID, "text", authorUser()))
-                .isInstanceOf(AccessForbiddenException.class);
-    }
-
-    @Test
-    void update_shouldThrowNotFound_whenCommentNotExists() {
-        when(commentRepository.findById(COMMENT_ID)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> commentService.update(COMMENT_ID, "text", authorUser()))
-                .isInstanceOf(ResourceNotFoundException.class);
     }
 
     // ── delete ───────────────────────────────────────────────

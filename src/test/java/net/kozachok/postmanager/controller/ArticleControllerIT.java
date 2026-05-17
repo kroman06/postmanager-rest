@@ -192,6 +192,20 @@ class ArticleControllerIT extends BaseIntegrationTest {
                 .andExpect(status().isForbidden());
     }
 
+    @Test
+    void updateArticle_shouldReturn200_whenArticleIsPublished() throws Exception {
+        String author = authorToken();
+        String id = createAndPublishArticle("author@test.com");
+
+        mockMvc.perform(put("/articles/" + id)
+                        .header("Authorization", author)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new ArticleRequest("Updated", "Content", null))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Updated"));
+    }
+
     // US-09 Archive article (Author)
 
     @Test
@@ -326,6 +340,22 @@ class ArticleControllerIT extends BaseIntegrationTest {
     @Test
     void getArticleById_shouldReturn404_whenNotFound() throws Exception {
         mockMvc.perform(get("/articles/" + UUID.randomUUID()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getArticleById_shouldReturn404_whenArticleIsDraft() throws Exception {
+        String author = authorToken();
+        String body = mockMvc.perform(post("/articles")
+                        .header("Authorization", author)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new ArticleRequest("Draft", "Content", null))))
+                .andReturn().getResponse().getContentAsString();
+
+        String id = objectMapper.readTree(body).get("id").asString();
+
+        mockMvc.perform(get("/articles/" + id))
                 .andExpect(status().isNotFound());
     }
 

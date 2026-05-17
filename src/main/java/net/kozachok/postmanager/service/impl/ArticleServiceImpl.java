@@ -5,7 +5,9 @@ import net.kozachok.postmanager.domain.*;
 import net.kozachok.postmanager.dto.request.ArticleRequest;
 import net.kozachok.postmanager.dto.response.ArticleResponse;
 import net.kozachok.postmanager.dto.response.PageResponse;
-import net.kozachok.postmanager.exception.*;
+import net.kozachok.postmanager.exception.AccessForbiddenException;
+import net.kozachok.postmanager.exception.InvalidStatusTransitionException;
+import net.kozachok.postmanager.exception.ResourceNotFoundException;
 import net.kozachok.postmanager.mapper.ArticleMapper;
 import net.kozachok.postmanager.repository.ArticleRepository;
 import net.kozachok.postmanager.repository.CategoryRepository;
@@ -158,14 +160,28 @@ public class ArticleServiceImpl implements ArticleService {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<ArticleResponse> findPublished(Pageable pageable) {
-        return toPage(articleRepository.findAllByStatus(ArticleStatus.PUBLISHED, pageable));
+    public PageResponse<ArticleResponse> findPublished(Pageable pageable, Integer categoryId) {
+        Page<Article> page = categoryId != null
+                ? articleRepository.findAllByStatusAndCategoryId(
+                ArticleStatus.PUBLISHED, categoryId, pageable)
+                : articleRepository.findAllByStatus(ArticleStatus.PUBLISHED, pageable);
+        return toPage(page);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public PageResponse<ArticleResponse> findAll(Pageable pageable, ArticleStatus status) {
+        Page<Article> page = status != null
+                ? articleRepository.findAllByStatus(status, pageable)
+                : articleRepository.findAll(pageable);
+        return toPage(page);
     }
 
     @Override
     @Transactional(readOnly = true)
     public PageResponse<ArticleResponse> findByAuthor(UUID authorId, Pageable pageable) {
-        return toPage(articleRepository.findAllByAuthorId(authorId, pageable));
+        return toPage(articleRepository.findAllByAuthorIdAndStatus(
+                authorId, ArticleStatus.PUBLISHED, pageable));
     }
 
     private Article findOrThrow(UUID id) {

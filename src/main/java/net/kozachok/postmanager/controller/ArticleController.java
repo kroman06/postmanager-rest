@@ -2,6 +2,7 @@ package net.kozachok.postmanager.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import net.kozachok.postmanager.domain.ArticleStatus;
 import net.kozachok.postmanager.dto.request.ArticleRequest;
 import net.kozachok.postmanager.dto.response.ArticleResponse;
 import net.kozachok.postmanager.dto.response.PageResponse;
@@ -25,14 +26,33 @@ public class ArticleController {
     @GetMapping
     public PageResponse<ArticleResponse> findPublished(
             @RequestParam(defaultValue = "0")  int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false)    Integer categoryId) {
         return articleService.findPublished(
-                PageRequest.of(page, size, Sort.by("publishedAt").descending()));
+                PageRequest.of(page, size, Sort.by("publishedAt").descending()),
+                categoryId);
+    }
+
+    @GetMapping("/admin/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public PageResponse<ArticleResponse> findAll(
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false)    ArticleStatus status) {
+        return articleService.findAll(
+                PageRequest.of(page, size, Sort.by("createdAt").descending()),
+                status);
     }
 
     @GetMapping("/{id}")
     public ArticleResponse findById(@PathVariable UUID id) {
         return articleService.findById(id);
+    }
+
+    @GetMapping("/my/{id}")
+    @PreAuthorize("hasRole('AUTHOR')")
+    public ArticleResponse findMyById(@PathVariable UUID id) {
+        return articleService.findMyById(id, SecurityUtils.getCurrentUser());
     }
 
     @GetMapping("/my")
@@ -45,17 +65,21 @@ public class ArticleController {
                 currentUser.id(), PageRequest.of(page, size, Sort.by("createdAt").descending()));
     }
 
+    @GetMapping("/author/{authorId}")
+    public PageResponse<ArticleResponse> findByAuthor(
+            @PathVariable UUID authorId,
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return articleService.findByAuthor(
+                authorId, PageRequest.of(page, size, Sort.by("publishedAt").descending()));
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('AUTHOR')")
     @ResponseStatus(HttpStatus.CREATED)
     public ArticleResponse create(@Valid @RequestBody ArticleRequest request) {
         return articleService.create(request, SecurityUtils.getCurrentUser());
-    }
-
-    @GetMapping("/my/{id}")
-    @PreAuthorize("hasRole('AUTHOR')")
-    public ArticleResponse findMyById(@PathVariable UUID id) {
-        return articleService.findMyById(id, SecurityUtils.getCurrentUser());
     }
 
     @PutMapping("/{id}")

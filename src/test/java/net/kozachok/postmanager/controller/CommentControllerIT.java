@@ -89,47 +89,24 @@ class CommentControllerIT extends BaseIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
-    // US-19 Edit own comment
-
     @Test
-    void editComment_shouldReturn200_whenOwner() throws Exception {
-        String articleId = createPublishedArticle();
-        String reader = readerToken();
-        String commentBody = mockMvc.perform(post("/articles/" + articleId + "/comments")
-                        .header("Authorization", reader)
+    void addComment_shouldReturn404_whenArticleIsDraft() throws Exception {
+        String author = authorToken();
+        String body = mockMvc.perform(post("/articles")
+                        .header("Authorization", author)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                new CommentRequest("Original"))))
+                                new ArticleRequest("Draft", "Content", null))))
                 .andReturn().getResponse().getContentAsString();
 
-        String commentId = objectMapper.readTree(commentBody).get("id").asString();
-        mockMvc.perform(patch("/comments/" + commentId)
-                        .header("Authorization", reader)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                new CommentRequest("Updated"))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content").value("Updated"));
-    }
+        String draftId = objectMapper.readTree(body).get("id").asString();
 
-    @Test
-    void editComment_shouldReturn403_whenNotOwner() throws Exception {
-        String articleId = createPublishedArticle();
-        String commentBody = mockMvc.perform(post("/articles/" + articleId + "/comments")
+        mockMvc.perform(post("/articles/" + draftId + "/comments")
                         .header("Authorization", readerToken())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
-                                new CommentRequest("Original"))))
-                .andReturn().getResponse().getContentAsString();
-
-        String commentId = objectMapper.readTree(commentBody).get("id").asString();
-        createUser("other@test.com", RoleName.ROLE_READER);
-        mockMvc.perform(patch("/comments/" + commentId)
-                        .header("Authorization", getToken("other@test.com"))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(
-                                new CommentRequest("Hacked"))))
-                .andExpect(status().isForbidden());
+                                new CommentRequest("Comment"))))
+                .andExpect(status().isNotFound());
     }
 
     // US-20 Admin delete comment

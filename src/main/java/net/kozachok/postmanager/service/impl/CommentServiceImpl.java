@@ -3,16 +3,19 @@ package net.kozachok.postmanager.service.impl;
 import lombok.RequiredArgsConstructor;
 import net.kozachok.postmanager.domain.*;
 import net.kozachok.postmanager.dto.response.CommentResponse;
-import net.kozachok.postmanager.exception.*;
+import net.kozachok.postmanager.dto.response.PageResponse;
+import net.kozachok.postmanager.exception.AccessForbiddenException;
+import net.kozachok.postmanager.exception.ResourceNotFoundException;
 import net.kozachok.postmanager.mapper.CommentMapper;
 import net.kozachok.postmanager.repository.ArticleRepository;
 import net.kozachok.postmanager.repository.CommentRepository;
 import net.kozachok.postmanager.repository.UserRepository;
 import net.kozachok.postmanager.service.CommentService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -26,14 +29,19 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<CommentResponse> findByArticleId(UUID articleId) {
+    public PageResponse<CommentResponse> findByArticleId(UUID articleId, Pageable pageable) {
         if (!articleRepository.existsById(articleId)) {
             throw new ResourceNotFoundException("Article", articleId);
         }
-
-        return commentRepository.findAllByArticleId(articleId).stream()
-                .map(commentMapper::toResponse)
-                .toList();
+        Page<Comment> page = commentRepository.findAllByArticleId(articleId, pageable);
+        return new PageResponse<>(
+                page.getContent().stream().map(commentMapper::toResponse).toList(),
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages(),
+                page.isLast()
+        );
     }
 
     @Override
@@ -48,19 +56,6 @@ public class CommentServiceImpl implements CommentService {
         comment.setContent(content);
         comment.setArticle(article);
         comment.setAuthor(author);
-
-        return commentMapper.toResponse(commentRepository.save(comment));
-    }
-
-    @Override
-    public CommentResponse update(UUID id, String content, CurrentUser currentUser) {
-        Comment comment = commentRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Comment", id));
-
-        if (!comment.isOwnedBy(currentUser.id())) {
-            throw new AccessForbiddenException();
-        }
-        comment.setContent(content);
 
         return commentMapper.toResponse(commentRepository.save(comment));
     }

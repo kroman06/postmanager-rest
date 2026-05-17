@@ -24,7 +24,9 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class JwtServiceImplTest {
+
     private static final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
+    private static final String SECRET = dotenv.get("JWT_SECRET", "5a7d3f9b2e1c8d4f6a0b3e7c9d2f1a8b4c6e0f3a7d5b9c1e4f2a6b8d0c3e5f7");
     @Mock
     private JwtProperties jwtProperties;
 
@@ -33,14 +35,12 @@ class JwtServiceImplTest {
 
     @Test
     void validateToken_shouldReturnFalse_whenTokenIsExpired() {
-        String secret = dotenv.get("JWT_SECRET", "5a7d3f9b2e1c8d4f6a0b3e7c9d2f1a8b4c6e0f3a7d5b9c1e4f2a6b8d0c3e5f7");
-        when(jwtProperties.getSecret()).thenReturn(secret);
-
+        when(jwtProperties.getSecret()).thenReturn(SECRET);
         String expiredToken = Jwts.builder()
                 .subject(UUID.randomUUID().toString())
                 .issuedAt(new Date(System.currentTimeMillis() - 7200000))
                 .expiration(new Date(System.currentTimeMillis() - 3600000))
-                .signWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
+                .signWith(Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8)))
                 .compact();
 
         boolean isValid = jwtService.validateToken(expiredToken);
@@ -50,8 +50,7 @@ class JwtServiceImplTest {
 
     @Test
     void validateToken_shouldReturnTrue_whenTokenIsValid() {
-        String secret = dotenv.get("JWT_SECRET", "5a7d3f9b2e1c8d4f6a0b3e7c9d2f1a8b4c6e0f3a7d5b9c1e4f2a6b8d0c3e5f7");
-        when(jwtProperties.getSecret()).thenReturn(secret);
+        when(jwtProperties.getSecret()).thenReturn(SECRET);
         when(jwtProperties.getAccessExpiration()).thenReturn(Duration.ofMinutes(15));
 
         User user = new User();
@@ -59,22 +58,18 @@ class JwtServiceImplTest {
         user.setRoles(Set.of());
 
         String token = jwtService.generateAccessToken(user);
-
         assertThat(jwtService.validateToken(token)).isTrue();
     }
 
     @Test
     void validateToken_shouldReturnFalse_whenTokenIsMalformed() {
-        when(jwtProperties.getSecret()).thenReturn(
-                "5a7d3f9b2e1c8d4f6a0b3e7c9d2f1a8b4c6e0f3a7d5b9c1e4f2a6b8d0c3e5f7");
-
+        when(jwtProperties.getSecret()).thenReturn(SECRET);
         assertThat(jwtService.validateToken("not.a.jwt")).isFalse();
     }
 
     @Test
     void extractUserId_shouldReturnCorrectId() {
-        String secret = dotenv.get("JWT_SECRET", "5a7d3f9b2e1c8d4f6a0b3e7c9d2f1a8b4c6e0f3a7d5b9c1e4f2a6b8d0c3e5f7");
-        when(jwtProperties.getSecret()).thenReturn(secret);
+        when(jwtProperties.getSecret()).thenReturn(SECRET);
         when(jwtProperties.getAccessExpiration()).thenReturn(Duration.ofMinutes(15));
 
         UUID expectedId = UUID.randomUUID();
@@ -89,8 +84,7 @@ class JwtServiceImplTest {
 
     @Test
     void extractRoles_shouldReturnCorrectRoles() {
-        String secret = dotenv.get("JWT_SECRET", "5a7d3f9b2e1c8d4f6a0b3e7c9d2f1a8b4c6e0f3a7d5b9c1e4f2a6b8d0c3e5f7");
-        when(jwtProperties.getSecret()).thenReturn(secret);
+        when(jwtProperties.getSecret()).thenReturn(SECRET);
         when(jwtProperties.getAccessExpiration()).thenReturn(Duration.ofMinutes(15));
 
         Role role = new Role();

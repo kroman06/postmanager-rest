@@ -105,6 +105,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private TokenResponse issueTokenPair(User user) {
+        refreshTokenRepository.deleteAllByUserId(user.getId());
+
         String accessToken  = jwtService.generateAccessToken(user);
         String rawRefresh   = jwtService.generateRefreshToken(user);
 
