@@ -8,10 +8,28 @@ import net.kozachok.postmanager.dto.request.RegisterRequest;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class AuthControllerIT extends BaseIntegrationTest {
+    // Checking current user
+    @Test
+    void getCurrentUser_shouldReturnUserDetails_whenAuthenticated() throws Exception {
+        mockMvc.perform(get("/auth/me")
+                        .header("Authorization", readerToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("reader@test.com"))
+                .andExpect(jsonPath("$.firstName").value("Test"))
+                .andExpect(jsonPath("$.lastName").value("User"))
+                .andExpect(jsonPath("$.roles[0]").value("ROLE_READER"));
+    }
+
+    @Test
+    void getCurrentUser_shouldReturn401_whenUnauthenticated() throws Exception {
+        mockMvc.perform(get("/auth/me"))
+                .andExpect(status().isUnauthorized());
+    }
+
     // US-01 Registration
     @Test
     void register_shouldReturn201_whenValidData() throws Exception {

@@ -224,4 +224,22 @@ class ArticleControllerIT extends BaseIntegrationTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").exists());
     }
+
+    @Test
+    void findMyById_shouldReturn200_whenOwner() throws Exception {
+        String author = authorToken();
+        String body = mockMvc.perform(post("/articles")
+                        .header("Authorization", author)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new ArticleRequest("Draft Title", "Content", null))))
+                .andReturn().getResponse().getContentAsString();
+
+        String id = objectMapper.readTree(body).get("id").asString();
+
+        mockMvc.perform(get("/articles/my/" + id)
+                        .header("Authorization", author))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Draft Title"));
+    }
 }

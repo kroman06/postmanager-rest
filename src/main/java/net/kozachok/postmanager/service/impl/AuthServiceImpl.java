@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Set;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +34,14 @@ public class AuthServiceImpl implements AuthService {
     private final JwtService             jwtService;
     private final JwtProperties          jwtProperties;
     private final UserMapper             userMapper;
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserResponse getCurrentUser(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", id));
+        return userMapper.toResponse(user);
+    }
 
     @Override
     public UserResponse register(RegisterRequest request) {

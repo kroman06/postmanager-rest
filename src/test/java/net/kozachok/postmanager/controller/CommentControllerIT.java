@@ -40,6 +40,21 @@ class CommentControllerIT extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.message").exists());
     }
 
+    @Test
+    void getCommentsByArticleId_shouldReturn200_whenCommentsExist() throws Exception {
+        String articleId = createPublishedArticle();
+
+        mockMvc.perform(post("/articles/" + articleId + "/comments")
+                .header("Authorization", readerToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(new CommentRequest("Test Comment"))));
+
+        mockMvc.perform(get("/articles/" + articleId + "/comments"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].content").value("Test Comment"));
+    }
+
     // US-18 Add comment
 
     @Test
