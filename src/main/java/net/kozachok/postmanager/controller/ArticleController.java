@@ -67,7 +67,7 @@ public class ArticleController {
             description = "Returns an article owned by the currently authenticated author."
     )
     @GetMapping("/my/{id}")
-    @PreAuthorize("hasRole('AUTHOR')")
+    @PreAuthorize("hasAnyRole('AUTHOR', 'ADMIN')")
     public ArticleResponse findMyById(@PathVariable UUID id) {
         return articleService.findMyById(id, SecurityUtils.getCurrentUser());
     }
@@ -77,7 +77,7 @@ public class ArticleController {
             description = "Returns a paginated list of articles created by the currently authenticated author."
     )
     @GetMapping("/my")
-    @PreAuthorize("hasRole('AUTHOR')")
+    @PreAuthorize("hasAnyRole('AUTHOR', 'ADMIN')")
     public PageResponse<ArticleResponse> findMy(
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -105,7 +105,7 @@ public class ArticleController {
             description = "Creates a new draft article for the currently authenticated author."
     )
     @PostMapping
-    @PreAuthorize("hasRole('AUTHOR')")
+    @PreAuthorize("hasAnyRole('AUTHOR', 'ADMIN')")
     @ResponseStatus(HttpStatus.CREATED)
     public ArticleResponse create(@Valid @RequestBody ArticleRequest request) {
         return articleService.create(request, SecurityUtils.getCurrentUser());
@@ -116,7 +116,7 @@ public class ArticleController {
             description = "Updates an article owned by the currently authenticated author."
     )
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('AUTHOR')")
+    @PreAuthorize("hasAnyRole('AUTHOR', 'ADMIN')")
     public ArticleResponse update(@PathVariable UUID id,
                                   @Valid @RequestBody ArticleRequest request) {
         return articleService.update(id, request, SecurityUtils.getCurrentUser());

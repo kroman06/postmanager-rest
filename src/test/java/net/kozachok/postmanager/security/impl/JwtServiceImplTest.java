@@ -92,7 +92,7 @@ class JwtServiceImplTest {
 
         User user = new User();
         user.setId(UUID.randomUUID());
-        user.setRoles(Set.of(role));
+        user.getRoles().add(role);
 
         String token = jwtService.generateAccessToken(user);
 

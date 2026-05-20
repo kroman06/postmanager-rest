@@ -2,12 +2,18 @@ package net.kozachok.postmanager.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import net.kozachok.postmanager.config.JwtProperties;
-import net.kozachok.postmanager.domain.*;
+import net.kozachok.postmanager.domain.RefreshToken;
+import net.kozachok.postmanager.domain.Role;
+import net.kozachok.postmanager.domain.RoleName;
+import net.kozachok.postmanager.domain.User;
 import net.kozachok.postmanager.dto.request.LoginRequest;
 import net.kozachok.postmanager.dto.request.RegisterRequest;
 import net.kozachok.postmanager.dto.response.TokenResponse;
 import net.kozachok.postmanager.dto.response.UserResponse;
-import net.kozachok.postmanager.exception.*;
+import net.kozachok.postmanager.exception.ArticleApiException;
+import net.kozachok.postmanager.exception.EmailAlreadyExistsException;
+import net.kozachok.postmanager.exception.InvalidRefreshTokenException;
+import net.kozachok.postmanager.exception.ResourceNotFoundException;
 import net.kozachok.postmanager.mapper.UserMapper;
 import net.kozachok.postmanager.repository.RefreshTokenRepository;
 import net.kozachok.postmanager.repository.RoleRepository;
@@ -20,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -57,7 +62,8 @@ public class AuthServiceImpl implements AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setFirstName(request.firstName());
         user.setLastName(request.lastName());
-        user.setRoles(Set.of(readerRole));
+
+        user.getRoles().add(readerRole);
 
         return userMapper.toResponse(userRepository.save(user));
     }

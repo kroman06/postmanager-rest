@@ -66,7 +66,7 @@ public abstract class BaseIntegrationTest {
         user.setPasswordHash(passwordEncoder.encode(TEST_PASSWORD));
         user.setFirstName("Test");
         user.setLastName("User");
-        user.setRoles(Set.of(r));
+        user.getRoles().add(r);
         return userRepository.save(user);
     }
 
