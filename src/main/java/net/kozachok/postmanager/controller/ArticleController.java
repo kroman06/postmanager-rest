@@ -127,7 +127,7 @@ public class ArticleController {
             description = "Publishes a draft article owned by the currently authenticated author."
     )
     @PatchMapping("/{id}/publish")
-    @PreAuthorize("hasRole('AUTHOR')")
+    @PreAuthorize("hasAnyRole('AUTHOR', 'ADMIN')")
     public ArticleResponse publish(@PathVariable UUID id) {
         return articleService.publish(id, SecurityUtils.getCurrentUser());
     }
